@@ -1,97 +1,97 @@
-# 🏖️ Employees Leave Management System
+# 🏖️ Hệ Thống Quản Lý Nghỉ Phép Nhân Viên
 
-A full-stack web application for managing employee leave requests, built with **Java Spring Boot** and a **Relational Database**. Developed as part of an Agile/Scrum course project in collaboration with [Axon Active Vietnam](https://www.axonactive.com).
+Ứng dụng web full-stack hỗ trợ quản lý đơn xin nghỉ phép, xây dựng bằng **Java Spring Boot** và **Cơ sở dữ liệu quan hệ (PostgreSQL)**. Phát triển trong khuôn khổ môn học **Information Technology Enterprise** theo phương pháp Agile/Scrum, với yêu cầu thực tế từ [Axon Active Vietnam](https://www.axonactive.com).
 
 ---
 
-## 📋 Table of Contents
+## 📋 Mục Lục
 
-- [Vision](#vision)
-- [Tech Stack](#tech-stack)
-- [Features](#features)
-- [Project Structure](#project-structure)
-- [Getting Started](#getting-started)
+- [Tầm nhìn dự án](#tầm-nhìn-dự-án)
+- [Công nghệ sử dụng](#công-nghệ-sử-dụng)
+- [Tính năng](#tính-năng)
+- [Cấu trúc dự án](#cấu-trúc-dự-án)
+- [Hướng dẫn cài đặt](#hướng-dẫn-cài-đặt)
 - [API Endpoints](#api-endpoints)
-- [Database Schema](#database-schema)
-- [Team](#team)
-- [License](#license)
+- [Cơ sở dữ liệu](#cơ-sở-dữ-liệu)
+- [Quy trình làm việc](#quy-trình-làm-việc)
+- [Thành viên nhóm](#thành-viên-nhóm)
 
 ---
 
-## 🎯 Vision
+## 🎯 Tầm Nhìn Dự Án
 
-A transparent, automated leave management tool that helps employees track their leave days and allows managers to review requests efficiently — fully compliant with labor law requirements.
+Xây dựng một công cụ quản lý ngày nghỉ phép **minh bạch, tự động và đúng luật lao động**, giúp nhân viên chủ động theo dõi số ngày phép và giúp quản lý xét duyệt đơn từ một cách hiệu quả.
 
-**Key business rules:**
-- Each employee has a default of **12 leave days per year**
-- Unused leave days at year-end are **accumulated (carried over)** to the next year (max 6 days)
-- Managers can **approve or reject** leave requests with notes
-- Automated **year-end accumulation job** runs on January 1st at 00:00
+**Quy tắc nghiệp vụ cốt lõi:**
+- Mỗi nhân viên có mặc định **12 ngày phép/năm** theo quy định pháp luật
+- Ngày phép dư cuối năm được **cộng dồn (accumulate)** sang năm tiếp theo (tối đa 6 ngày)
+- Manager có thể **duyệt hoặc từ chối** đơn phép kèm ghi chú lý do
+- **Job tự động** chạy vào 00:00 ngày 1/1 hàng năm để xử lý cộng dồn phép
 
 ---
 
-## 🛠️ Tech Stack
+## 🛠️ Công Nghệ Sử Dụng
 
-| Layer | Technology |
+| Tầng | Công nghệ |
 |---|---|
 | Backend | Java 17+, Spring Boot 3.x |
-| Security | Spring Security, JWT |
-| Database | PostgreSQL 18 |
-| DB Migration | Flyway |
-| Build Tool | Maven |
+| Bảo mật | Spring Security, JWT |
+| Cơ sở dữ liệu | PostgreSQL 18 |
+| Migration DB | Flyway |
+| Build tool | Maven |
 | Frontend | React.js / Angular |
-| API Testing | Postman |
-| Containerization | Docker, Docker Compose |
-| Version Control | Git, GitHub |
-| Project Management | JIRA |
+| Test API | Postman |
+| Container hóa | Docker, Docker Compose |
+| Quản lý mã nguồn | Git, GitHub |
+| Quản lý dự án | JIRA (Scrum board) |
 
 ---
 
-## ✨ Features
+## ✨ Tính Năng
 
-### Employee
-- 🔐 Login with JWT authentication
-- 📅 Submit leave requests (with date range, type, and reason)
-- 👀 View personal leave balance (total, used, remaining, carried over)
-- 📋 View leave request history with status tracking
-- ❌ Cancel pending leave requests
+### Nhân viên (Employee)
+- 🔐 Đăng nhập bằng email/password, xác thực qua JWT
+- 📅 Gửi đơn xin nghỉ phép (ngày bắt đầu, kết thúc, loại phép, lý do)
+- 👀 Xem số ngày phép còn lại (tổng, đã dùng, còn lại, cộng dồn)
+- 📋 Xem lịch sử toàn bộ đơn phép theo trạng thái
+- ❌ Hủy đơn đang chờ duyệt (PENDING)
 
-### Manager
-- ✅ Approve or reject leave requests (with mandatory note on rejection)
-- 👥 View team members' leave balances
-- 📊 View all pending requests in one place
-- 🗓️ Team leave calendar overview
+### Quản lý (Manager)
+- ✅ Duyệt hoặc từ chối đơn phép (bắt buộc ghi lý do khi từ chối)
+- 👥 Xem số ngày phép còn lại của từng nhân viên trong team
+- 📊 Xem danh sách tất cả đơn đang chờ duyệt
+- 🗓️ Xem lịch nghỉ của team theo tháng
 
-### System (Automated)
-- 🔄 Scheduled year-end accumulation job (every Jan 1st at 00:00)
-- 📧 Email notifications for request submission, approval, and rejection
-- 📝 Full audit log for all accumulation events
+### Hệ thống (Tự động)
+- 🔄 Job cộng dồn phép cuối năm (chạy mỗi ngày 1/1 lúc 00:00)
+- 📧 Gửi email thông báo khi gửi đơn, duyệt đơn, từ chối đơn
+- 📝 Ghi đầy đủ audit log cho mọi sự kiện cộng dồn phép
 
 ---
 
-## 📁 Project Structure
+## 📁 Cấu Trúc Dự Án
 
 ```
 leave-management-system/
 ├── backend/
 │   ├── src/
 │   │   ├── main/java/com/axonactive/leave/
-│   │   │   ├── auth/           # JWT, Spring Security config
-│   │   │   ├── user/           # User entity, repository, service
+│   │   │   ├── auth/            # Cấu hình JWT, Spring Security
+│   │   │   ├── user/            # Entity, Repository, Service nhân viên
 │   │   │   ├── leave/
-│   │   │   │   ├── request/    # LeaveRequest CRUD, state machine
-│   │   │   │   └── balance/    # LeaveBalance, accumulation logic
-│   │   │   └── scheduler/      # Year-end accumulation job
+│   │   │   │   ├── request/     # CRUD đơn phép, state machine
+│   │   │   │   └── balance/     # Số dư phép, logic cộng dồn
+│   │   │   └── scheduler/       # Job tự động cuối năm
 │   │   └── resources/
 │   │       ├── application.yml
-│   │       └── db/migration/   # Flyway SQL scripts
+│   │       └── db/migration/    # Flyway SQL scripts
 │   ├── pom.xml
 │   └── Dockerfile
 ├── frontend/
 │   ├── src/
 │   │   ├── components/
 │   │   ├── pages/
-│   │   └── services/           # API call layer (axios)
+│   │   └── services/            # Gọi API backend (axios)
 │   └── package.json
 ├── docker-compose.yml
 └── README.md
@@ -99,46 +99,52 @@ leave-management-system/
 
 ---
 
-## 🚀 Getting Started
+## 🚀 Hướng Dẫn Cài Đặt
 
-### Prerequisites
+### Yêu cầu hệ thống
 
-Make sure you have the following installed:
+Đảm bảo đã cài đặt đầy đủ các công cụ sau:
 
-- Java 17 or higher (`java -version`)
-- Node.js 18+ (`node -v`)
-- PostgreSQL 16+ (`psql --version`)
-- Maven (`mvn -version`)
-- Docker & Docker Compose (optional, for containerized setup)
+| Công cụ | Phiên bản tối thiểu | Kiểm tra |
+|---|---|---|
+| Java (JDK) | 17+ | `java -version` |
+| Node.js | 18+ | `node -v` |
+| PostgreSQL | 16+ | `psql --version` |
+| Maven | 3.8+ | `mvn -version` |
+| Git | Bất kỳ | `git --version` |
+| Docker *(tùy chọn)* | 20+ | `docker -v` |
 
-### Option 1 — Run with Docker Compose (Recommended)
+---
+
+### Cách 1 — Chạy bằng Docker Compose *(Khuyến nghị)*
 
 ```bash
-# Clone the repository
+# 1. Clone repository về máy
 git clone https://github.com/your-org/leave-management-system.git
 cd leave-management-system
 
-# Start all services (backend + frontend + database)
+# 2. Khởi động toàn bộ hệ thống
 docker-compose up --build
 ```
 
-App will be available at:
-- Frontend: `http://localhost:3000`
-- Backend API: `http://localhost:8080`
-- pgAdmin: `http://localhost:5050`
+Sau khi khởi động xong, truy cập:
+- **Frontend:** `http://localhost:3000`
+- **Backend API:** `http://localhost:8080`
+- **pgAdmin (quản lý DB):** `http://localhost:5050`
 
-### Option 2 — Run Manually
+---
 
-**1. Set up the database**
+### Cách 2 — Chạy thủ công từng phần
+
+**Bước 1 — Tạo database**
 
 ```bash
-# Create database
 psql -U postgres -c "CREATE DATABASE leave_management;"
 ```
 
-**2. Configure environment variables**
+**Bước 2 — Cấu hình môi trường backend**
 
-Create `backend/src/main/resources/application-local.yml`:
+Tạo file `backend/src/main/resources/application-local.yml`:
 
 ```yaml
 spring:
@@ -153,17 +159,22 @@ spring:
 app:
   jwt:
     secret: your-secret-key-min-256-bits
-    expiration: 28800000  # 8 hours in ms
+    expiration: 28800000  # 8 tiếng (tính bằng ms)
 ```
 
-**3. Run the backend**
+> ⚠️ **Lưu ý bảo mật:** Không commit file `application-local.yml` lên Git. File này đã được thêm vào `.gitignore`.
+
+**Bước 3 — Chạy backend**
 
 ```bash
 cd backend
 mvn spring-boot:run -Dspring.profiles.active=local
 ```
 
-**4. Run the frontend**
+Backend sẽ chạy tại `http://localhost:8080`.  
+Flyway sẽ tự động tạo các bảng theo schema định nghĩa.
+
+**Bước 4 — Chạy frontend**
 
 ```bash
 cd frontend
@@ -171,98 +182,113 @@ npm install
 npm start
 ```
 
+Frontend sẽ chạy tại `http://localhost:3000`.
+
 ---
 
 ## 🔌 API Endpoints
 
-### Auth
-| Method | Endpoint | Description | Auth Required |
+### Xác thực
+| Method | Endpoint | Mô tả | Cần Auth |
 |---|---|---|---|
-| POST | `/api/auth/login` | Login, returns JWT token | ❌ |
-| POST | `/api/auth/logout` | Invalidate token | ✅ |
+| POST | `/api/auth/login` | Đăng nhập, trả về JWT token | ❌ |
+| POST | `/api/auth/logout` | Vô hiệu hóa token | ✅ |
 
-### Leave Requests
-| Method | Endpoint | Description | Role |
+### Đơn nghỉ phép
+| Method | Endpoint | Mô tả | Role |
 |---|---|---|---|
-| POST | `/api/leave-requests` | Submit a new leave request | Employee |
-| GET | `/api/leave-requests` | Get own leave requests | Employee |
-| GET | `/api/leave-requests/{id}` | Get request details | All |
-| PUT | `/api/leave-requests/{id}/cancel` | Cancel a PENDING request | Employee |
-| PUT | `/api/leave-requests/{id}/approve` | Approve a request | Manager |
-| PUT | `/api/leave-requests/{id}/reject` | Reject a request (note required) | Manager |
-| GET | `/api/leave-requests/pending` | List all pending requests | Manager |
-| GET | `/api/leave-requests/team` | List all team requests | Manager |
+| POST | `/api/leave-requests` | Gửi đơn xin nghỉ phép | Employee |
+| GET | `/api/leave-requests` | Xem danh sách đơn của bản thân | Employee |
+| GET | `/api/leave-requests/{id}` | Xem chi tiết một đơn | Tất cả |
+| PUT | `/api/leave-requests/{id}/cancel` | Hủy đơn đang PENDING | Employee |
+| PUT | `/api/leave-requests/{id}/approve` | Duyệt đơn | Manager |
+| PUT | `/api/leave-requests/{id}/reject` | Từ chối đơn (bắt buộc có ghi chú) | Manager |
+| GET | `/api/leave-requests/pending` | Danh sách đơn chờ duyệt | Manager |
+| GET | `/api/leave-requests/team` | Toàn bộ đơn của team | Manager |
 
-### Leave Balance
-| Method | Endpoint | Description | Role |
+### Số dư ngày phép
+| Method | Endpoint | Mô tả | Role |
 |---|---|---|---|
-| GET | `/api/leave-balance/me` | Get own leave balance | Employee |
-| GET | `/api/leave-balance/team` | Get team balances | Manager |
-| GET | `/api/leave-balance/{userId}` | Get a specific employee's balance | Manager |
+| GET | `/api/leave-balance/me` | Xem số ngày phép của bản thân | Employee |
+| GET | `/api/leave-balance/team` | Xem số dư phép toàn team | Manager |
+| GET | `/api/leave-balance/{userId}` | Xem số dư phép một nhân viên | Manager |
 
 ---
 
-## 🗄️ Database Schema
+## 🗄️ Cơ Sở Dữ Liệu
 
 ```
-users
-  ├── id (UUID PK)
-  ├── email (UNIQUE)
-  ├── password_hash
-  ├── full_name
-  ├── role (EMPLOYEE | MANAGER)
-  └── manager_id (FK → users.id)
+users                          leave_balances
+├── id (UUID PK)               ├── id (UUID PK)
+├── email (UNIQUE)             ├── user_id (FK → users)
+├── password_hash              ├── year
+├── full_name                  ├── total_days (mặc định: 12.0)
+├── role (EMPLOYEE|MANAGER)    ├── used_days
+└── manager_id (FK → users)    └── carried_over_days
 
-leave_balances
-  ├── id (UUID PK)
-  ├── user_id (FK → users.id)
-  ├── year
-  ├── total_days (default: 12.0)
-  ├── used_days
-  └── carried_over_days
+leave_requests                 leave_accumulation_logs
+├── id (UUID PK)               ├── id (UUID PK)
+├── employee_id (FK → users)   ├── user_id (FK → users)
+├── start_date / end_date      ├── from_year / to_year
+├── days_count                 ├── days_carried
+├── leave_type                 └── days_expired
+├── reason
+├── status (PENDING|APPROVED
+│          |REJECTED|CANCELLED)
+├── reviewed_by (FK → users)
+└── review_note
+```
 
-leave_requests
-  ├── id (UUID PK)
-  ├── employee_id (FK → users.id)
-  ├── start_date / end_date
-  ├── days_count
-  ├── leave_type (ANNUAL | SICK | UNPAID | OTHER)
-  ├── reason
-  ├── status (PENDING | APPROVED | REJECTED | CANCELLED)
-  ├── reviewed_by (FK → users.id)
-  └── review_note
-
-leave_accumulation_logs
-  ├── id (UUID PK)
-  ├── user_id (FK → users.id)
-  ├── from_year / to_year
-  ├── days_carried
-  └── days_expired
+**Công thức tính số ngày còn lại:**
+```
+remaining = total_days + carried_over_days - used_days
 ```
 
 ---
 
-## 👥 Team
+## 🔄 Quy Trình Làm Việc (Git Flow)
 
-| Role | Responsibility |
-|---|---|
-| Product Owner | Define requirements, prioritize backlog, liaise with Axon Active |
-| Scrum Master | Facilitate ceremonies, remove blockers, track Sprint progress |
-| Dev 1 | Backend — Auth & Security (Spring Security, JWT) |
-| Dev 2 | Backend — Leave Request CRUD & State Machine |
-| Dev 3 | Backend — Leave Balance & Accumulation Job |
-| Dev 4 | Database design, Flyway migrations, Docker setup |
-| Dev 5 | Frontend — Employee features |
-| Dev 6 | Frontend — Manager features |
-| Dev 7 | Testing, integration, Postman collection |
+```
+main              ← Production, chỉ merge khi pass CI/CD
+└── develop       ← Nhánh tích hợp chính
+    ├── feature/US-01-auth-jwt
+    ├── feature/US-06-leave-request
+    ├── feature/US-03-leave-balance
+    ├── feature/DB-schema-migration
+    ├── feature/FE-employee-dashboard
+    ├── feature/FE-manager-dashboard
+    └── feature/testing-integration
+```
+
+**Quy tắc bắt buộc:**
+- Mỗi Dev chỉ làm việc trên branch của mình
+- Tạo Pull Request vào `develop`, cần ít nhất **1 người review** trước khi merge
+- Commit message theo format: `type: mô tả ngắn` — ví dụ: `feat: add leave request API`, `fix: correct balance calculation`
+- Không commit trực tiếp lên `main` hoặc `develop`
 
 ---
 
-## 📄 License
+## 👥 Thành Viên Nhóm
 
-This project is developed for educational purposes as part of the **Information Technology Enterprise** course.  
-Client requirements provided by **Axon Active Vietnam Co., Ltd.**
+| Vai trò | Họ tên | Trách nhiệm chính |
+|---|---|---|
+| Product Owner | *(Tên thành viên)* | Quản lý backlog, làm việc với Axon Active |
+| Scrum Master | *(Tên thành viên)* | Điều phối Scrum, gỡ blockers |
+| Dev 1 | *(Tên thành viên)* | Backend — Auth & Spring Security |
+| Dev 2 | *(Tên thành viên)* | Backend — Leave Request CRUD |
+| Dev 3 | *(Tên thành viên)* | Backend — Leave Balance & Accumulation |
+| Dev 4 | *(Tên thành viên)* | Database, Flyway, Docker |
+| Dev 5 | *(Tên thành viên)* | Frontend — Employee features |
+| Dev 6 | *(Tên thành viên)* | Frontend — Manager features |
+| Dev 7 | *(Tên thành viên)* | Testing & Integration |
 
 ---
 
-> Built with ☕ Java, 🌱 Spring Boot, and the Scrum framework.
+## 📄 Giấy Phép
+
+Dự án được phát triển phục vụ mục đích học tập trong môn **Information Technology Enterprise**.  
+Yêu cầu nghiệp vụ được cung cấp bởi **Axon Active Vietnam Co., Ltd.**
+
+---
+
+> Được xây dựng bằng ☕ Java, 🌱 Spring Boot và phương pháp Scrum.
