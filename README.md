@@ -36,7 +36,7 @@ Xây dựng một công cụ quản lý ngày nghỉ phép **minh bạch, tự �
 |---|---|
 | Backend | Java 17+, Spring Boot 3.x |
 | Bảo mật | Spring Security, JWT |
-| Cơ sở dữ liệu | PostgreSQL 18 |
+| Cơ sở dữ liệu | Supabase |
 | Migration DB | Flyway |
 | Build tool | Maven |
 | Frontend | React.js / Angular |
