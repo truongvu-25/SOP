@@ -272,15 +272,15 @@ main              ← Production, chỉ merge khi pass CI/CD
 
 | Vai trò | Họ tên | Trách nhiệm chính |
 |---|---|---|
-| Product Owner | *(Tên thành viên)* | Quản lý backlog, làm việc với Axon Active |
-| Scrum Master | *(Tên thành viên)* | Điều phối Scrum, gỡ blockers |
-| Dev 1 | *(Tên thành viên)* | Backend — Auth & Spring Security |
-| Dev 2 | *(Tên thành viên)* | Backend — Leave Request CRUD |
-| Dev 3 | *(Tên thành viên)* | Backend — Leave Balance & Accumulation |
-| Dev 4 | *(Tên thành viên)* | Database, Flyway, Docker |
-| Dev 5 | *(Tên thành viên)* | Frontend — Employee features |
-| Dev 6 | *(Tên thành viên)* | Frontend — Manager features |
-| Dev 7 | *(Tên thành viên)* | Testing & Integration |
+| Product Owner | Vũ | Quản lý backlog, làm việc với Axon Active |
+| Scrum Master | Đào | Điều phối Scrum, gỡ blockers |
+| Dev 1 | Tài | Backend — Auth & Spring Security |
+| Dev 2 | Huy | Backend — Leave Request CRUD |
+| Dev 3 | Vinh | Backend — Leave Balance & Accumulation |
+| Dev 4 | Nguyên | Database, Flyway, Docker |
+| Dev 5 | Thy | Frontend — Employee features |
+| Dev 6 | Nhi | Frontend — Manager features |
+| Dev 7 | Duy | Testing & Integration |
 
 ---
 
