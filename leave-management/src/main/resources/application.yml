@@ -1,16 +1,15 @@
 spring:
   datasource:
-    url: jdbc:postgresql://localhost:5432/leave_management?options=-c%20TimeZone%3DUTC
-    username: admin
-    password: admin123
+    url: jdbc:postgresql://aws-1-ap-southeast-1.pooler.supabase.com:5432/postgres?user=postgres.kwpkidgxsuyzgbkpbqlq&password=@123!456@789
+    username: postgres.kwpkidgxsuyzgbkpbqlq
+    password: "@123!456@789"
     driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
       ddl-auto: validate
     show-sql: true
   flyway:
-    enabled: true
-    locations: classpath:db/migration
+    enabled: false
 
 server:
   port: 8080
