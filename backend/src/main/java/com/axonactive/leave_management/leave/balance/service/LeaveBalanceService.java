@@ -34,7 +34,7 @@ public class LeaveBalanceService {
     }
 
     /* /SCRUM 46 */
-    public LeaveBalance deductLeaveDays(User user, int days) {
+    public LeaveBalance deductBalance(User user, int days) {
         LeaveBalance balance = getOrCreateCurrentYearBalance(user);
 
         if (days <= 0) {
