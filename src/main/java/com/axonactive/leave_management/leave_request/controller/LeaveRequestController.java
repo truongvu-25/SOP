@@ -3,6 +3,7 @@ package com.axonactive.leave_management.leave_request.controller;
 import com.axonactive.leave_management.common.exception.ResourceNotFoundException;
 import com.axonactive.leave_management.leave_request.dto.LeaveRequestDTO;
 import com.axonactive.leave_management.leave_request.dto.LeaveRequestResponse;
+import com.axonactive.leave_management.leave_request.dto.RejectRequestDTO;
 import com.axonactive.leave_management.leave_request.service.LeaveRequestService;
 import com.axonactive.leave_management.user.entity.User;
 import com.axonactive.leave_management.user.repository.UserRepository;
@@ -16,6 +17,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/leave-requests")
@@ -24,6 +26,8 @@ public class LeaveRequestController {
 
     private final LeaveRequestService leaveRequestService;
     private final UserRepository userRepository;
+
+    // ── EMPLOYEE endpoints ──────────────────────────────────────────────────
 
     @PostMapping
     @PreAuthorize("hasRole('EMPLOYEE')")
@@ -55,6 +59,47 @@ public class LeaveRequestController {
         Long employeeId = resolveUserId(principal);
         return ResponseEntity.ok(leaveRequestService.cancel(id, employeeId));
     }
+
+    // ── MANAGER endpoints ───────────────────────────────────────────────────
+
+    @PutMapping("/{id}/approve")
+    @PreAuthorize("hasRole('MANAGER')")
+    public ResponseEntity<LeaveRequestResponse> approve(
+            @PathVariable Long id,
+            @RequestBody(required = false) Map<String, String> body,
+            @AuthenticationPrincipal UserDetails principal) {
+        Long managerId = resolveUserId(principal);
+        String reviewNote = (body != null) ? body.get("reviewNote") : null;
+        return ResponseEntity.ok(leaveRequestService.approve(id, managerId, reviewNote));
+    }
+
+    @PutMapping("/{id}/reject")
+    @PreAuthorize("hasRole('MANAGER')")
+    public ResponseEntity<LeaveRequestResponse> reject(
+            @PathVariable Long id,
+            @Valid @RequestBody RejectRequestDTO dto,
+            @AuthenticationPrincipal UserDetails principal) {
+        Long managerId = resolveUserId(principal);
+        return ResponseEntity.ok(leaveRequestService.reject(id, managerId, dto.getNote()));
+    }
+
+    @GetMapping("/pending")
+    @PreAuthorize("hasRole('MANAGER')")
+    public ResponseEntity<List<LeaveRequestResponse>> getPendingRequests(
+            @AuthenticationPrincipal UserDetails principal) {
+        Long managerId = resolveUserId(principal);
+        return ResponseEntity.ok(leaveRequestService.getPendingRequests(managerId));
+    }
+
+    @GetMapping("/team")
+    @PreAuthorize("hasRole('MANAGER')")
+    public ResponseEntity<List<LeaveRequestResponse>> getTeamRequests(
+            @AuthenticationPrincipal UserDetails principal) {
+        Long managerId = resolveUserId(principal);
+        return ResponseEntity.ok(leaveRequestService.getTeamRequests(managerId));
+    }
+
+    // ── helper ──────────────────────────────────────────────────────────────
 
     private Long resolveUserId(UserDetails principal) {
         User user = userRepository.findByEmail(principal.getUsername())

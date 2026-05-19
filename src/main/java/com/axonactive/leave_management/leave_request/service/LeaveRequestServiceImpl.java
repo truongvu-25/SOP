@@ -3,6 +3,7 @@ package com.axonactive.leave_management.leave_request.service;
 import com.axonactive.leave_management.common.exception.AccessDeniedException;
 import com.axonactive.leave_management.common.exception.InvalidLeaveRequestException;
 import com.axonactive.leave_management.common.exception.ResourceNotFoundException;
+import com.axonactive.leave_management.leave.balance.service.LeaveBalanceService;
 import com.axonactive.leave_management.leave_request.dto.LeaveRequestDTO;
 import com.axonactive.leave_management.leave_request.dto.LeaveRequestResponse;
 import com.axonactive.leave_management.leave_request.entity.LeaveRequest;
@@ -26,6 +27,7 @@ public class LeaveRequestServiceImpl implements LeaveRequestService {
 
     private final LeaveRequestRepository leaveRequestRepository;
     private final UserRepository userRepository;
+    private final LeaveBalanceService leaveBalanceService;
 
     @Override
     @Transactional
@@ -79,13 +81,100 @@ public class LeaveRequestServiceImpl implements LeaveRequestService {
             throw new AccessDeniedException("You are not allowed to cancel this leave request");
         }
 
-        if (request.getStatus() != LeaveStatus.PENDING) {
-            throw new InvalidLeaveRequestException("Only PENDING leave requests can be cancelled");
-        }
+        validateTransition(request.getStatus(), LeaveStatus.CANCELLED);
 
         request.setStatus(LeaveStatus.CANCELLED);
         request.setUpdatedAt(LocalDateTime.now());
         return toResponse(leaveRequestRepository.save(request));
+    }
+
+    @Override
+    @Transactional
+    public LeaveRequestResponse approve(Long requestId, Long managerId, String reviewNote) {
+        LeaveRequest request = leaveRequestRepository.findById(requestId)
+                .orElseThrow(() -> new ResourceNotFoundException("Leave request not found with id: " + requestId));
+
+        validateTransition(request.getStatus(), LeaveStatus.APPROVED);
+
+        User manager = userRepository.findById(managerId)
+                .orElseThrow(() -> new ResourceNotFoundException("Manager not found with id: " + managerId));
+
+        User employee = request.getEmployee();
+        if (employee.getManager() == null || !employee.getManager().getId().equals(managerId)) {
+            throw new AccessDeniedException("You are not the manager of this employee");
+        }
+
+        try {
+            leaveBalanceService.deductBalance(employee, (int) Math.ceil(request.getDaysCount()));
+        } catch (IllegalArgumentException e) {
+            throw new InvalidLeaveRequestException(e.getMessage());
+        }
+
+        request.setStatus(LeaveStatus.APPROVED);
+        request.setReviewedBy(manager);
+        request.setReviewNote(reviewNote);
+        request.setUpdatedAt(LocalDateTime.now());
+
+        return toResponse(leaveRequestRepository.save(request));
+    }
+
+    @Override
+    @Transactional
+    public LeaveRequestResponse reject(Long requestId, Long managerId, String note) {
+        if (note == null || note.isBlank()) {
+            throw new InvalidLeaveRequestException("Rejection note is required");
+        }
+
+        LeaveRequest request = leaveRequestRepository.findById(requestId)
+                .orElseThrow(() -> new ResourceNotFoundException("Leave request not found with id: " + requestId));
+
+        validateTransition(request.getStatus(), LeaveStatus.REJECTED);
+
+        User manager = userRepository.findById(managerId)
+                .orElseThrow(() -> new ResourceNotFoundException("Manager not found with id: " + managerId));
+
+        User employee = request.getEmployee();
+        if (employee.getManager() == null || !employee.getManager().getId().equals(managerId)) {
+            throw new AccessDeniedException("You are not the manager of this employee");
+        }
+
+        request.setStatus(LeaveStatus.REJECTED);
+        request.setReviewedBy(manager);
+        request.setReviewNote(note);
+        request.setUpdatedAt(LocalDateTime.now());
+
+        return toResponse(leaveRequestRepository.save(request));
+    }
+
+    @Override
+    public List<LeaveRequestResponse> getPendingRequests(Long managerId) {
+        return leaveRequestRepository
+                .findAllByStatusAndEmployee_Manager_Id(LeaveStatus.PENDING, managerId)
+                .stream()
+                .map(this::toResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<LeaveRequestResponse> getTeamRequests(Long managerId) {
+        return leaveRequestRepository
+                .findAllByEmployee_Manager_Id(managerId)
+                .stream()
+                .map(this::toResponse)
+                .collect(Collectors.toList());
+    }
+
+    // Cho phép: PENDING → APPROVED, PENDING → REJECTED, PENDING → CANCELLED
+    private void validateTransition(LeaveStatus current, LeaveStatus target) {
+        boolean allowed = current == LeaveStatus.PENDING &&
+                (target == LeaveStatus.APPROVED
+                        || target == LeaveStatus.REJECTED
+                        || target == LeaveStatus.CANCELLED);
+
+        if (!allowed) {
+            throw new InvalidLeaveRequestException(
+                    "Cannot transition from " + current + " to " + target);
+        }
     }
 
     double calculateWorkingDays(LocalDate start, LocalDate end) {

@@ -14,4 +14,12 @@ public interface LeaveRequestService {
     LeaveRequestResponse getById(Long id);
 
     LeaveRequestResponse cancel(Long requestId, Long employeeId);
+
+    LeaveRequestResponse approve(Long requestId, Long managerId, String reviewNote);
+
+    LeaveRequestResponse reject(Long requestId, Long managerId, String note);
+
+    List<LeaveRequestResponse> getPendingRequests(Long managerId);
+
+    List<LeaveRequestResponse> getTeamRequests(Long managerId);
 }
