@@ -1,0 +1,40 @@
+version: '3.8'
+
+services:
+  # --- CẤU HÌNH BACKEND ---
+  backend-service:
+    build:
+      context: ./backend    # Trỏ đến thư mục backend để chạy Dockerfile ở đó
+    container_name: leave-backend
+    ports:
+      - "8080:8080"         # Map cổng 8080 của máy thật vào cổng 8080 của container
+    environment:
+      # Truyền các biến môi trường kết nối Supabase trực tiếp vào đây thay vì lưu ở file local
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://aws-1-ap-southeast-2.pooler.supabase.com:6543/postgres
+      - SPRING_DATASOURCE_USERNAME=postgres.acrjojwjeuvqtonmklci
+      - SPRING_DATASOURCE_PASSWORD=Batholomeo.249249
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=validate
+      - APP_JWT_SECRET=404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
+      - APP_JWT_EXPIRATION=28800000
+    networks:
+      - leave-network
+
+  # --- CẤU HÌNH FRONTEND ---
+  frontend-service:
+    build:
+      context: ./frontend   # Trỏ đến thư mục frontend để chạy Dockerfile ở đó
+    container_name: leave-frontend
+    ports:
+      - "3000:3000"         # Map cổng 3000 của máy thật vào cổng 3000 của container
+    restart: always
+    environment:
+      - CHOKIDAR_USEPOLLING=true # Giúp React nhận diện thay đổi file khi code ở máy thật (hot-reload)
+    networks:
+      - leave-network
+    depends_on:
+      - backend-service     # Đảm bảo backend khởi động trước frontend
+
+# Tạo một mạng chung để 2 container nhận diện được nhau
+networks:
+  leave-network:
+    driver: bridge

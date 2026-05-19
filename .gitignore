@@ -1,0 +1,12 @@
+### Node / Frontend ###
+**/node_modules/
+**/build/
+**/dist/
+.eslintcache
+.node_repl_history
+*~
+*.log
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
