@@ -267,4 +267,4 @@ git push origin feature/ten-tinh-nang
 
 ---
 
-*Last updated: 21/05/2026 — SCRUM-23 · Axon Active Vietnam*
+*Last updated: 21/05/2026 — Tài Huỳnh · Dev1*
