@@ -1,5 +1,5 @@
 # 🏢 SOP — Leave Management System
-> Hệ thống quản lý nghỉ phép nhân viên — Axon Active Vietnam · SCRUM-23
+> Hệ thống quản lý nghỉ phép nhân viên — Axon Active Vietnam · 
 
 ---
 
