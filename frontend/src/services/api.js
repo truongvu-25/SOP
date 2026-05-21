@@ -1,9 +1,7 @@
 import axios from 'axios';
 
-// ── API Configuration ─────────────────────────────────────────
-const API_URL = '/api'; // nginx sẽ proxy /api → backend:8080
+const API_URL = '/api';
 
-// ── Create axios instance ─────────────────────────────────────
 const apiClient = axios.create({
   baseURL: API_URL,
   timeout: 10000,
@@ -12,7 +10,6 @@ const apiClient = axios.create({
   },
 });
 
-// ── Interceptor: Thêm JWT token vào mỗi request ────────────────
 apiClient.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');
@@ -24,14 +21,17 @@ apiClient.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// ── Interceptor: Xử lý response errors ────────────────────────
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
-    // 401: Token hết hạn
     if (error.response?.status === 401) {
-      localStorage.removeItem('token');
-      window.location.href = '/login';
+      // Chi redirect neu token thuc su het han (khong co token)
+      const token = localStorage.getItem('token');
+      if (!token) {
+        localStorage.removeItem('token');
+        window.location.href = '/login';
+      }
+      // Neu co token ma van 401 -> khong redirect, de component xu ly
     }
     return Promise.reject(error);
   }

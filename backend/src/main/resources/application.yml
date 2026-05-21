@@ -1,8 +1,8 @@
-﻿spring:
+spring:
   datasource:
-    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://aws-1-ap-southeast-1.pooler.supabase.com:5432/postgres}
-    username: ${SPRING_DATASOURCE_USERNAME:postgres.kwpkidgxsuyzgbkpbqlq}
-    password: ${SPRING_DATASOURCE_PASSWORD:@123!456@789}
+    url: ${SPRING_DATASOURCE_URL}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
     driver-class-name: org.postgresql.Driver
     hikari:
       maximum-pool-size: 3
@@ -24,8 +24,8 @@ server:
   port: 8080
 app:
   jwt:
-    secret: ${JWT_SECRET:404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970}
-    expiration: 28800000
+    secret: ${JWT_SECRET}
+    expiration: ${JWT_EXPIRATION:86400000}
 springdoc:
   api-docs:
     path: /v3/api-docs

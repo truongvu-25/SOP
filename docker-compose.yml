@@ -7,9 +7,10 @@ services:
     ports:
       - "8080:8080"
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://aws-1-ap-southeast-1.pooler.supabase.com:5432/postgres
-      - SPRING_DATASOURCE_USERNAME=postgres.kwpkidgxsuyzgbkpbqlq
-      - SPRING_DATASOURCE_PASSWORD=@123!456@789
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://aws-1-ap-southeast-2.pooler.supabase.com:5432/postgres
+      - SPRING_DATASOURCE_USERNAME=postgres.acrjojwjeuvqtonmklci
+      - SPRING_DATASOURCE_PASSWORD=Batholomeo.249249
+      - JWT_SECRET=404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
     restart: always
     networks:
       - sop-network

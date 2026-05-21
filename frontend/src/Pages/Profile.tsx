@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import apiClient from '../services/api';
 
-// ─── Types ────────────────────────────────────────────────────────────────────
 interface UserProfile {
   name: string;
   department: string;
@@ -14,12 +14,6 @@ interface UserProfile {
   totalLeave: number;
 }
 
-interface ProfileProps {
-  user?: UserProfile;
-  onLogout?: () => void;
-}
-
-// ─── Styles ───────────────────────────────────────────────────────────────────
 const STYLES = `
   @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600&family=DM+Sans:wght@300;400;500&display=swap');
   @import url('https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.x/dist/tabler-icons.min.css');
@@ -33,7 +27,6 @@ const STYLES = `
     padding: 32px 24px 48px;
   }
 
-  /* ── Header ── */
   .pf-header {
     max-width: 720px;
     margin: 0 auto 28px;
@@ -56,7 +49,6 @@ const STYLES = `
     color: #1a2e44;
   }
 
-  /* ── Layout ── */
   .pf-layout {
     max-width: 720px;
     margin: 0 auto;
@@ -65,7 +57,6 @@ const STYLES = `
     gap: 16px;
   }
 
-  /* ── Card base ── */
   .pf-card {
     background: rgba(255,255,255,0.88);
     backdrop-filter: blur(16px);
@@ -76,7 +67,6 @@ const STYLES = `
     box-shadow: 0 2px 8px rgba(28,58,94,0.06), 0 12px 32px rgba(28,58,94,0.07);
   }
 
-  /* ── Hero card ── */
   .pf-hero {
     display: flex;
     align-items: center;
@@ -137,7 +127,6 @@ const STYLES = `
     background: #5DCAA5;
   }
 
-  /* ── Info grid ── */
   .pf-info-card {
     animation: fadeUp 0.45s 0.10s cubic-bezier(0.22,1,0.36,1) both;
   }
@@ -157,8 +146,6 @@ const STYLES = `
     gap: 20px;
   }
 
-  .pf-info-item {}
-
   .pf-info-label {
     font-size: 11px;
     font-weight: 500;
@@ -177,10 +164,7 @@ const STYLES = `
     gap: 7px;
   }
 
-  .pf-info-value i {
-    font-size: 14px;
-    color: #94a8b5;
-  }
+  .pf-info-value i { font-size: 14px; color: #94a8b5; }
 
   .pf-divider {
     height: 1px;
@@ -188,7 +172,6 @@ const STYLES = `
     margin: 20px 0;
   }
 
-  /* ── Leave balance ── */
   .pf-leave-card {
     animation: fadeUp 0.45s 0.15s cubic-bezier(0.22,1,0.36,1) both;
   }
@@ -220,16 +203,9 @@ const STYLES = `
   .pf-stat-num.green { color: #2a7d5f; }
   .pf-stat-num.orange { color: #b45309; }
 
-  .pf-stat-label {
-    font-size: 11px;
-    color: #8fa3b0;
-    font-weight: 400;
-  }
+  .pf-stat-label { font-size: 11px; color: #8fa3b0; font-weight: 400; }
 
-  /* Progress bar */
-  .pf-progress-wrap {
-    margin-top: 4px;
-  }
+  .pf-progress-wrap { margin-top: 4px; }
 
   .pf-progress-header {
     display: flex;
@@ -255,12 +231,9 @@ const STYLES = `
     transition: width 0.6s ease;
   }
 
-  /* ── Danger zone ── */
   .pf-danger-card {
     animation: fadeUp 0.45s 0.20s cubic-bezier(0.22,1,0.36,1) both;
   }
-
-  .pf-section-label.red { color: #b45309; }
 
   .pf-logout-row {
     display: flex;
@@ -269,11 +242,7 @@ const STYLES = `
     gap: 12px;
   }
 
-  .pf-logout-desc {
-    font-size: 13px;
-    color: #6b808f;
-    line-height: 1.5;
-  }
+  .pf-logout-desc { font-size: 13px; color: #6b808f; line-height: 1.5; }
 
   .pf-logout-desc strong {
     display: block;
@@ -300,17 +269,10 @@ const STYLES = `
     transition: background 0.15s, border-color 0.15s, transform 0.1s;
   }
 
-  .btn-logout:hover {
-    background: #fff1f1;
-    border-color: #f87171;
-    transform: translateY(-1px);
-  }
-
+  .btn-logout:hover { background: #fff1f1; border-color: #f87171; transform: translateY(-1px); }
   .btn-logout:active { transform: translateY(0); }
-
   .btn-logout i { font-size: 15px; }
 
-  /* ── Modal confirm ── */
   .pf-overlay {
     position: fixed;
     inset: 0;
@@ -381,52 +343,61 @@ const STYLES = `
     from { opacity: 0; transform: translateY(14px); }
     to   { opacity: 1; transform: translateY(0); }
   }
-
   @keyframes fadeIn {
     from { opacity: 0; }
     to   { opacity: 1; }
   }
-
   @keyframes slideUp {
     from { opacity: 0; transform: translateY(20px) scale(0.97); }
     to   { opacity: 1; transform: translateY(0) scale(1); }
   }
 `;
 
-// ─── Mock data ────────────────────────────────────────────────────────────────
-const DEFAULT_USER: UserProfile = {
-  name: "Nguyễn Văn An",
-  department: "Kỹ thuật phần mềm",
-  email: "an.nguyen@congty.com",
-  role: "Software Engineer",
-  employeeId: "EMP-00142",
-  joinDate: "15/03/2022",
-  avatarInitials: "NA",
-  remainingLeave: 8,
-  usedLeave: 4,
-  totalLeave: 12,
-};
-
-// ─── Component ────────────────────────────────────────────────────────────────
-export default function Profile({ user = DEFAULT_USER, onLogout }: ProfileProps) {
+export default function Profile() {
   const [showConfirm, setShowConfirm] = useState(false);
+  const [remainingLeave, setRemainingLeave] = useState(12);
+  const [usedLeave, setUsedLeave] = useState(0);
+  const [totalLeave, setTotalLeave] = useState(12);
+
+  const fullName = localStorage.getItem('fullName') || 'User';
+  const email = localStorage.getItem('email') || '';
+  const role = localStorage.getItem('role') || 'EMPLOYEE';
+
+  useEffect(() => {
+    apiClient.get('/leave-balance/me')
+      .then(res => {
+        setRemainingLeave(res.data.remainingDays);
+        setUsedLeave(res.data.usedDays);
+        setTotalLeave(res.data.totalDays);
+      })
+      .catch(err => console.error('Loi tai so du ngay phep:', err));
+  }, []);
+
+  const user: UserProfile = {
+    name: fullName,
+    department: role === 'MANAGER' ? 'Quản lý' : 'Nhân viên',
+    email: email,
+    role: role === 'MANAGER' ? 'Manager' : 'Employee',
+    employeeId: '',
+    joinDate: '',
+    avatarInitials: fullName.charAt(0).toUpperCase(),
+    remainingLeave,
+    usedLeave,
+    totalLeave,
+  };
 
   const usedPct = Math.round((user.usedLeave / user.totalLeave) * 100);
 
   const handleLogout = () => {
     setShowConfirm(false);
-    // TODO: call your auth logout here, e.g. authApi.logout()
-    // then redirect: navigate('/login')
-    if (onLogout) onLogout();
-    else alert("Đã đăng xuất (mock)");
+    localStorage.clear();
+    window.location.href = '/login';
   };
 
   return (
     <>
       <style>{STYLES}</style>
-
       <div className="pf-page">
-        {/* Header */}
         <div className="pf-header">
           <p className="pf-breadcrumb">
             LeaveFlow &rsaquo; <span>Hồ sơ cá nhân</span>
@@ -435,8 +406,6 @@ export default function Profile({ user = DEFAULT_USER, onLogout }: ProfileProps)
         </div>
 
         <div className="pf-layout">
-
-          {/* ── Hero card ── */}
           <div className="pf-card pf-hero">
             <div className="pf-avatar">{user.avatarInitials}</div>
             <div className="pf-hero-info">
@@ -449,61 +418,28 @@ export default function Profile({ user = DEFAULT_USER, onLogout }: ProfileProps)
             </div>
           </div>
 
-          {/* ── Thông tin cá nhân ── */}
           <div className="pf-card pf-info-card">
             <p className="pf-section-label">Thông tin cá nhân</p>
             <div className="pf-info-grid">
-              <div className="pf-info-item">
+              <div>
                 <div className="pf-info-label">Họ và tên</div>
-                <div className="pf-info-value">
-                  <i className="ti ti-user" />
-                  {user.name}
-                </div>
+                <div className="pf-info-value"><i className="ti ti-user" />{user.name}</div>
               </div>
-              <div className="pf-info-item">
+              <div>
                 <div className="pf-info-label">Email</div>
-                <div className="pf-info-value">
-                  <i className="ti ti-mail" />
-                  {user.email}
-                </div>
+                <div className="pf-info-value"><i className="ti ti-mail" />{user.email || 'Chưa cập nhật'}</div>
               </div>
-              <div className="pf-info-item">
+              <div>
                 <div className="pf-info-label">Phòng ban</div>
-                <div className="pf-info-value">
-                  <i className="ti ti-building" />
-                  {user.department}
-                </div>
+                <div className="pf-info-value"><i className="ti ti-building" />{user.department}</div>
               </div>
-              <div className="pf-info-item">
+              <div>
                 <div className="pf-info-label">Chức vụ</div>
-                <div className="pf-info-value">
-                  <i className="ti ti-briefcase" />
-                  {user.role}
-                </div>
-              </div>
-            </div>
-
-            <div className="pf-divider" />
-
-            <div className="pf-info-grid">
-              <div className="pf-info-item">
-                <div className="pf-info-label">Mã nhân viên</div>
-                <div className="pf-info-value">
-                  <i className="ti ti-id-badge" />
-                  {user.employeeId}
-                </div>
-              </div>
-              <div className="pf-info-item">
-                <div className="pf-info-label">Ngày vào công ty</div>
-                <div className="pf-info-value">
-                  <i className="ti ti-calendar" />
-                  {user.joinDate}
-                </div>
+                <div className="pf-info-value"><i className="ti ti-briefcase" />{user.role}</div>
               </div>
             </div>
           </div>
 
-          {/* ── Số dư ngày phép ── */}
           <div className="pf-card pf-leave-card">
             <p className="pf-section-label">Ngày phép năm nay</p>
             <div className="pf-leave-stats">
@@ -520,7 +456,6 @@ export default function Profile({ user = DEFAULT_USER, onLogout }: ProfileProps)
                 <div className="pf-stat-label">Đã sử dụng</div>
               </div>
             </div>
-
             <div className="pf-progress-wrap">
               <div className="pf-progress-header">
                 <span className="pf-progress-label">Đã sử dụng</span>
@@ -532,7 +467,6 @@ export default function Profile({ user = DEFAULT_USER, onLogout }: ProfileProps)
             </div>
           </div>
 
-          {/* ── Đăng xuất ── */}
           <div className="pf-card pf-danger-card">
             <p className="pf-section-label">Tài khoản</p>
             <div className="pf-logout-row">
@@ -546,26 +480,20 @@ export default function Profile({ user = DEFAULT_USER, onLogout }: ProfileProps)
               </button>
             </div>
           </div>
-
         </div>
       </div>
 
-      {/* ── Confirm modal ── */}
       {showConfirm && (
         <div className="pf-overlay" onClick={() => setShowConfirm(false)}>
           <div className="pf-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="pf-modal-icon">
-              <i className="ti ti-logout" />
-            </div>
+            <div className="pf-modal-icon"><i className="ti ti-logout" /></div>
             <h2 className="pf-modal-title">Xác nhận đăng xuất?</h2>
             <p className="pf-modal-desc">
               Bạn chắc chắn muốn đăng xuất khỏi <strong>LeaveFlow</strong>?
               Phiên làm việc hiện tại sẽ kết thúc.
             </p>
             <div className="pf-modal-actions">
-              <button className="btn-cancel-modal" onClick={() => setShowConfirm(false)}>
-                Huỷ
-              </button>
+              <button className="btn-cancel-modal" onClick={() => setShowConfirm(false)}>Huỷ</button>
               <button className="btn-confirm-logout" onClick={handleLogout}>
                 <i className="ti ti-logout" />
                 Đăng xuất
