@@ -201,6 +201,7 @@ Username: postgres.acrjojwjeuvqtonmklci
 | D4 | Khôi Nguyên | Database & DevOps |
 | D5 | Thy | Frontend Employee Features |
 | D6 | Nhi | Frontend Manager Features |
+| D7 | Duy | Tester |
 
 ---
 
