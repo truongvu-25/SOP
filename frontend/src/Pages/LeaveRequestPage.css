@@ -1,0 +1,48 @@
+.lr-page {
+	font-family: 'DM Sans', 'Segoe UI', sans-serif;
+	color: #1a1a18;
+	min-height: 100vh;
+	background: #FAFAF8;
+	padding: 28px 24px;
+}
+
+.lr-grid {
+	display: grid;
+	grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+	gap: 20px;
+	max-width: 1000px;
+	margin: 0 auto;
+}
+
+.lr-card {
+	background: #fff;
+	border: 0.5px solid #D3D1C7;
+	border-radius: 12px;
+	padding: 20px 20px 18px;
+}
+
+.lr-history-wrap {
+	background: #fff;
+	border: 0.5px solid #D3D1C7;
+	border-radius: 12px;
+	overflow: hidden;
+}
+
+.lr-history-header {
+	padding: 14px 18px;
+	border-bottom: 0.5px solid #E8E6E0;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+}
+
+.lr-history-empty {
+	padding: 40px 18px;
+	text-align: center;
+	color: #B4B2A9;
+}
+
+.lr-history {
+	max-height: 480px;
+	overflow-y: auto;
+}

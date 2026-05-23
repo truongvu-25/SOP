@@ -1,6 +1,8 @@
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import apiClient from '../services/api';
+import './Dashboard.css';
+
 export type LeaveStatus = "pending" | "approved" | "rejected";
 
 export interface HistoryItem {
@@ -16,7 +18,6 @@ export interface HistoryItem {
 
 const MOCK_BALANCE = 12;
 const MOCK_USED = 3;
-const MOCK_TOTAL = MOCK_BALANCE + MOCK_USED;
 
 const MOCK_HISTORY: HistoryItem[] = [
   { id: 1, type: "Phép năm", start: "2026-05-12", end: "2026-05-13", days: 2, reason: "", status: "pending", submitted: "10/05/2026" },
@@ -39,13 +40,13 @@ function getTodayLabel() {
 
 function StatusBadge({ status }: { status: LeaveStatus }) {
   const map: Record<LeaveStatus, { bg: string; color: string; label: string }> = {
-    pending:  { bg: "#FAEEDA", color: "#854F0B", label: "PENDING" },
+    pending:  { bg: "#FAEEDA", color: "#BA7517", label: "PENDING" },
     approved: { bg: "#EAF3DE", color: "#3B6D11", label: "APPROVED" },
     rejected: { bg: "#FCEBEB", color: "#A32D2D", label: "REJECTED" },
   };
   const s = map[status];
   return (
-    <span style={{ fontSize: 10, padding: "2px 8px", borderRadius: 99, background: s.bg, color: s.color, fontWeight: 600, letterSpacing: ".04em", flexShrink: 0 }}>
+    <span style={{ fontSize: 10, padding: "2px 8px", borderRadius: 99, background: s.bg, color: s.color, fontWeight: 600 }}>
       {s.label}
     </span>
   );
@@ -53,13 +54,13 @@ function StatusBadge({ status }: { status: LeaveStatus }) {
 
 function StatCard({ label, value, sub, icon, valueColor }: { label: string; value: number; sub: string; icon: string; valueColor?: string }) {
   return (
-    <div style={styles.statCard}>
-      <div style={styles.statLabel}>
+    <div className="db-statCard">
+      <div style={{ fontSize: 12, color: '#8fa3b0', display: 'flex', gap: 8, alignItems: 'center' }}>
         <i className={`ti ${icon}`} style={{ fontSize: 14 }} aria-hidden="true" />
         {label}
       </div>
-      <div style={{ ...styles.statValue, ...(valueColor ? { color: valueColor } : {}) }}>{value}</div>
-      <div style={styles.statSub}>{sub}</div>
+      <div style={{ fontSize: 20, fontWeight: 700, color: valueColor || '#1a2e44', marginTop: 8 }}>{value}</div>
+      <div style={{ fontSize: 12, color: '#888780', marginTop: 6 }}>{sub}</div>
     </div>
   );
 }
@@ -68,39 +69,27 @@ function BalanceBar({ balance, used, total }: { balance: number; used: number; t
   const pct = Math.round((used / total) * 100);
   const isWarn = balance / total < 0.3;
   return (
-    <div style={styles.balanceWrap}>
-      <div style={styles.balanceRow}>
-        <span style={styles.balanceTitle}>Tình trạng ngày phép năm 2026</span>
-        <div style={styles.balanceNums}>
-          <span>Còn lại <strong>{balance}</strong></span>
-          <span>Đã dùng <strong>{used}</strong></span>
-          <span>Tổng <strong>{total}</strong></span>
-        </div>
+    <div className="db-balanceWrap">
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+        <div style={{ fontSize: 13, color: '#5F5E5A' }}>Tình trạng ngày phép năm 2026</div>
+        <div style={{ fontSize: 12, color: '#6b808f' }}>{used}/{total} đã dùng</div>
       </div>
-      <div style={styles.track}>
-        <div style={{ ...styles.fill, width: `${pct}%`, background: isWarn ? "#EF9F27" : "#1D9E75" }} />
+      <div style={{ height: 8, borderRadius: 99, background: '#E8EAF0', overflow: 'hidden' }}>
+        <div style={{ width: `${pct}%`, height: '100%', background: isWarn ? '#EF9F27' : '#1D9E75' }} />
       </div>
     </div>
   );
 }
 
 function HistoryRow({ item }: { item: HistoryItem }) {
-  const iconMap: Record<string, { bg: string; color: string; icon: string }> = {
-    "Phép năm":         { bg: "#FAEEDA", color: "#BA7517", icon: "ti-sun" },
-    "Nghỉ ốm":          { bg: "#E6F1FB", color: "#185FA5", icon: "ti-heart-rate-monitor" },
-    "Nghỉ thai sản":    { bg: "#FBEAF0", color: "#993556", icon: "ti-baby-carriage" },
-    "Nghỉ không lương": { bg: "#F1EFE8", color: "#5F5E5A", icon: "ti-calendar-off" },
-    "Việc riêng":       { bg: "#EEEDFE", color: "#534AB7", icon: "ti-briefcase" },
-  };
-  const ic = iconMap[item.type] ?? { bg: "#F1EFE8", color: "#5F5E5A", icon: "ti-calendar" };
   return (
-    <div style={styles.histRow}>
-      <div style={{ ...styles.histIcon, background: ic.bg }}>
-        <i className={`ti ${ic.icon}`} style={{ fontSize: 16, color: ic.color }} aria-hidden="true" />
+    <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: 12, borderBottom: '0.5px solid #E8E6E0' }}>
+      <div style={{ width: 44, height: 44, borderRadius: 8, background: '#F1EFE8', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <i className="ti ti-calendar" style={{ fontSize: 16, color: '#5F5E5A' }} aria-hidden="true" />
       </div>
-      <div style={styles.histInfo}>
-        <div style={styles.histType}>{item.type}</div>
-        <div style={styles.histDate}>{formatDate(item.start)} → {formatDate(item.end)} · {item.days} ngày</div>
+      <div style={{ flex: 1 }}>
+        <div style={{ fontSize: 14, fontWeight: 600 }}>{item.type}</div>
+        <div style={{ fontSize: 12, color: '#888780' }}>{formatDate(item.start)} → {formatDate(item.end)} · {item.days} ngày</div>
       </div>
       <StatusBadge status={item.status} />
     </div>
@@ -109,15 +98,15 @@ function HistoryRow({ item }: { item: HistoryItem }) {
 
 function QuickButton({ label, sub, iconBg, iconColor, icon, onClick }: { label: string; sub: string; iconBg: string; iconColor: string; icon: string; onClick: () => void }) {
   return (
-    <button style={styles.quickBtn} onClick={onClick}>
-      <div style={{ ...styles.quickIcon, background: iconBg }}>
-        <i className={`ti ${icon}`} style={{ fontSize: 17, color: iconColor }} aria-hidden="true" />
+    <button style={{ display: 'flex', gap: 12, alignItems: 'center', padding: 10, borderRadius: 8, border: '1px solid #E8EAF0', background: '#fff', cursor: 'pointer' }} onClick={onClick}>
+      <div style={{ width: 40, height: 40, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', background: iconBg }}>
+        <i className={`ti ${icon}`} style={{ fontSize: 16, color: iconColor }} aria-hidden="true" />
       </div>
-      <div style={{ flex: 1, textAlign: "left" }}>
-        <div style={styles.quickLabel}>{label}</div>
-        <div style={styles.quickSub}>{sub}</div>
+      <div style={{ textAlign: 'left' }}>
+        <div style={{ fontSize: 14, fontWeight: 600 }}>{label}</div>
+        <div style={{ fontSize: 12, color: '#888780' }}>{sub}</div>
       </div>
-      <i className="ti ti-chevron-right" style={{ fontSize: 15, color: "#888780" }} aria-hidden="true" />
+      <i className="ti ti-chevron-right" style={{ marginLeft: 'auto', color: '#888780' }} aria-hidden="true" />
     </button>
   );
 }
@@ -130,32 +119,37 @@ export default function Dashboard() {
   const [balance, setBalance] = useState(MOCK_BALANCE);
   const [used, setUsed] = useState(MOCK_USED);
   const total = balance + used;
+
   useEffect(() => {
     apiClient.get('/leave-balance/me')
-    .then(res => {
-      setBalance(res.data.remainingDays);
-      setUsed(res.data.usedDays);
-    })
-    .catch(err => console.error(err));
+      .then(res => {
+        setBalance(res.data.remainingDays);
+        setUsed(res.data.usedDays);
+      })
+      .catch(() => {});
   }, []);
+
   const recentHistory = MOCK_HISTORY.slice(0, 4);
   const pendingCount = MOCK_HISTORY.filter((i) => i.status === "pending").length;
   const approvedCount = MOCK_HISTORY.filter((i) => i.status === "approved").length;
 
   return (
-    <div style={styles.page}>
-      <div style={styles.topBar}>
+    <div className="db-page">
+      <div className="db-topBar">
         <div>
-          <span style={styles.greeting}>Xin chào, {fullName}</span>
-          <span style={styles.greetingSub}> · {role === 'MANAGER' ? 'Quản lý' : 'Nhân viên'}</span>
+          <div style={{ fontSize: 18, fontWeight: 700 }}>Xin chào, {fullName}</div>
+          <div style={{ fontSize: 13, color: '#888780' }}>{role === 'MANAGER' ? 'Quản lý' : 'Nhân viên'}</div>
         </div>
-        <div style={styles.dateChip}>
-          <i className="ti ti-calendar" style={{ fontSize: 13 }} aria-hidden="true" />
-          {getTodayLabel()}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div className="db-dateChip"><i className="ti ti-calendar" style={{ fontSize: 13 }} /> {getTodayLabel()}</div>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button style={{ background: '#0F6E56', color: '#fff', border: 'none', padding: '8px 12px', borderRadius: 8, cursor: 'pointer' }}>New</button>
+            <button style={{ background: 'transparent', border: '1px solid #D3D1C7', padding: '8px 12px', borderRadius: 8, cursor: 'pointer' }}>Export</button>
+          </div>
         </div>
       </div>
 
-      <div style={styles.statsGrid}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 14 }}>
         <StatCard label="Ngày phép còn lại" value={balance} sub={`/ ${total} ngày tổng`} icon="ti-calendar-event" valueColor="#0F6E56" />
         <StatCard label="Đã sử dụng" value={used} sub="ngày trong năm" icon="ti-calendar-minus" />
         <StatCard label="Đang chờ duyệt" value={pendingCount} sub="đơn pending" icon="ti-clock-hour-4" valueColor="#BA7517" />
@@ -164,71 +158,28 @@ export default function Dashboard() {
 
       <BalanceBar balance={balance} used={used} total={total} />
 
-      <div style={styles.twoCol}>
-        <div style={styles.card}>
-          <div style={styles.cardHeader}>
-            <span style={styles.cardTitle}>
-              <i className="ti ti-clock-hour-4" style={{ fontSize: 16 }} aria-hidden="true" />
-              Đơn gần đây
-            </span>
-            <span style={styles.cardAction} onClick={() => navigate("/leave-history")} role="button" tabIndex={0}>
-              Xem tất cả →
-            </span>
+      <div className="db-twoCol" style={{ marginTop: 16 }}>
+        <div className="db-card">
+          <div className="db-cardHeader">
+            <span style={{ fontSize: 14, fontWeight: 700 }}><i className="ti ti-clock-hour-4" style={{ marginRight: 8 }} /> Đơn gần đây</span>
+            <span style={{ fontSize: 13, color: '#6b808f', cursor: 'pointer' }} onClick={() => navigate('/leave-history')}>Xem tất cả →</span>
           </div>
-          {recentHistory.length === 0
-            ? <div style={styles.empty}>Chưa có đơn xin nghỉ nào</div>
-            : recentHistory.map((item) => <HistoryRow key={item.id} item={item} />)
-          }
+          <div>
+            {recentHistory.length === 0 ? <div className="db-empty">Chưa có đơn xin nghỉ nào</div> : recentHistory.map((item) => <HistoryRow key={item.id} item={item} />)}
+          </div>
         </div>
 
-        <div style={styles.card}>
-          <div style={styles.cardHeader}>
-            <span style={styles.cardTitle}>
-              <i className="ti ti-bolt" style={{ fontSize: 16 }} aria-hidden="true" />
-              Thao tác nhanh
-            </span>
+        <div className="db-card">
+          <div className="db-cardHeader">
+            <span style={{ fontSize: 14, fontWeight: 700 }}><i className="ti ti-bolt" style={{ marginRight: 8 }} /> Thao tác nhanh</span>
           </div>
-          <div style={{ padding: 8, display: "flex", flexDirection: "column", gap: 4 }}>
-            <QuickButton label="Tạo đơn xin nghỉ" sub="Điền form và gửi manager" icon="ti-file-plus" iconBg="#E1F5EE" iconColor="#0F6E56" onClick={() => navigate("/leave-request")} />
-            <QuickButton label="Lịch sử nghỉ phép" sub="Xem tất cả đơn đã gửi" icon="ti-clock-hour-4" iconBg="#E6F1FB" iconColor="#185FA5" onClick={() => navigate("/leave-history")} />
-            <QuickButton label="Hồ sơ cá nhân" sub="Thông tin tài khoản" icon="ti-user-circle" iconBg="#EEEDFE" iconColor="#534AB7" onClick={() => navigate("/profile")} />
+          <div style={{ padding: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <QuickButton label="Tạo đơn xin nghỉ" sub="Điền form và gửi manager" icon="ti-file-plus" iconBg="#E1F5EE" iconColor="#0F6E56" onClick={() => navigate('/leave-request')} />
+            <QuickButton label="Lịch sử nghỉ phép" sub="Xem tất cả đơn đã gửi" icon="ti-clock-hour-4" iconBg="#E6F1FB" iconColor="#185FA5" onClick={() => navigate('/leave-history')} />
+            <QuickButton label="Hồ sơ cá nhân" sub="Thông tin tài khoản" icon="ti-user-circle" iconBg="#EEEDFE" iconColor="#534AB7" onClick={() => navigate('/profile')} />
           </div>
         </div>
       </div>
     </div>
   );
 }
-
-const styles: Record<string, React.CSSProperties> = {
-  page: { fontFamily: "'DM Sans', 'Segoe UI', sans-serif", background: "#FAFAF8", padding: 24, minHeight: "100vh", color: "#1a1a18" },
-  topBar: { display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24 },
-  greeting: { fontSize: 16, fontWeight: 500, color: "#1a1a18" },
-  greetingSub: { fontSize: 13, color: "#888780" },
-  dateChip: { display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: "#5F5E5A", background: "#fff", border: "0.5px solid #D3D1C7", borderRadius: 8, padding: "5px 10px" },
-  statsGrid: { display: "grid", gridTemplateColumns: "repeat(4, minmax(0,1fr))", gap: 12, marginBottom: 16 },
-  statCard: { background: "#F1EFE8", borderRadius: 8, padding: "14px 16px" },
-  statLabel: { display: "flex", alignItems: "center", gap: 5, fontSize: 12, color: "#5F5E5A", marginBottom: 6 },
-  statValue: { fontSize: 26, fontWeight: 500, color: "#1a1a18", lineHeight: 1 },
-  statSub: { fontSize: 11, color: "#888780", marginTop: 4 },
-  balanceWrap: { background: "#fff", border: "0.5px solid #D3D1C7", borderRadius: 12, padding: "16px 18px", marginBottom: 16 },
-  balanceRow: { display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 },
-  balanceTitle: { fontSize: 13, color: "#5F5E5A" },
-  balanceNums: { display: "flex", gap: 16, fontSize: 12, color: "#888780" },
-  track: { height: 6, background: "#D3D1C7", borderRadius: 99, overflow: "hidden" },
-  fill: { height: "100%", borderRadius: 99, transition: "width .4s" },
-  twoCol: { display: "grid", gridTemplateColumns: "minmax(0,1.4fr) minmax(0,1fr)", gap: 16 },
-  card: { background: "#fff", border: "0.5px solid #D3D1C7", borderRadius: 12, overflow: "hidden" },
-  cardHeader: { padding: "14px 18px", borderBottom: "0.5px solid #E8E6E0", display: "flex", alignItems: "center", justifyContent: "space-between" },
-  cardTitle: { fontSize: 13, fontWeight: 500, color: "#1a1a18", display: "flex", alignItems: "center", gap: 7 },
-  cardAction: { fontSize: 12, color: "#0F6E56", cursor: "pointer" },
-  histRow: { padding: "12px 18px", borderBottom: "0.5px solid #E8E6E0", display: "flex", alignItems: "center", gap: 12 },
-  histIcon: { width: 32, height: 32, borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 },
-  histInfo: { flex: 1, minWidth: 0 },
-  histType: { fontSize: 13, fontWeight: 500, color: "#1a1a18" },
-  histDate: { fontSize: 11, color: "#888780", marginTop: 2 },
-  quickBtn: { display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", borderRadius: 8, cursor: "pointer", border: "none", background: "transparent", width: "100%", fontFamily: "inherit", transition: "background .12s" },
-  quickIcon: { width: 32, height: 32, borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 },
-  quickLabel: { fontSize: 13, color: "#1a1a18", fontWeight: 500 },
-  quickSub: { fontSize: 11, color: "#888780", marginTop: 1 },
-  empty: { padding: "28px 18px", textAlign: "center", color: "#888780", fontSize: 13 },
-};

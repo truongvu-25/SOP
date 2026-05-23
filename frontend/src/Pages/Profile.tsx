@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import apiClient from '../services/api';
+import './Profile.css';
 
 interface UserProfile {
   name: string;
@@ -396,7 +397,6 @@ export default function Profile() {
 
   return (
     <>
-      <style>{STYLES}</style>
       <div className="pf-page">
         <div className="pf-header">
           <p className="pf-breadcrumb">

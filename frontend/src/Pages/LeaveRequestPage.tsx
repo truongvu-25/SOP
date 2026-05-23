@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect } from "react";
 import apiClient from '../services/api';
 import type { CSSProperties, MouseEvent } from "react";
+import './LeaveRequestPage.css';
 
 const pad = (n: number): string => String(n).padStart(2, "0");
 const todayStr: string = (() => {
@@ -37,10 +38,24 @@ const LEAVE_TYPE_MAP: Record<string, string> = {
 const INITIAL_BALANCE = 12;
 const INITIAL_USED = 3;
 
-type LeaveStatus = "pending" | "approved" | "rejected";
+type LeaveStatus = "pending" | "approved" | "rejected" | "cancelled";
+
+type LeaveRequestResponse = {
+  id: string;
+  employeeId: string;
+  employeeName: string;
+  startDate: string;
+  endDate: string;
+  daysCount: number;
+  leaveType: string;
+  reason: string;
+  status: string;
+  reviewNote?: string | null;
+  createdAt: string;
+};
 
 interface LeaveEntry {
-  id: number;
+  id: string;
   type: string;
   start: string;
   end: string;
@@ -139,9 +154,41 @@ function StatusBadge({ status }: { status: LeaveStatus }) {
     pending:  { bg: "#FAEEDA", color: "#854F0B", label: "PENDING" },
     approved: { bg: "#EAF3DE", color: "#3B6D11", label: "APPROVED" },
     rejected: { bg: "#FCEBEB", color: "#A32D2D", label: "REJECTED" },
+    cancelled: { bg: "#F3F4F6", color: "#6B7280", label: "CANCELLED" },
   };
   const s = map[status] ?? map.pending;
   return <span style={{ fontSize: 10, padding: "2px 8px", borderRadius: 99, background: s.bg, color: s.color, fontWeight: 600 }}>{s.label}</span>;
+}
+
+function toLeaveTypeLabel(leaveType: string): string {
+  const map: Record<string, string> = {
+    ANNUAL: "Phép năm",
+    SICK: "Nghỉ ốm",
+    UNPAID: "Nghỉ không lương",
+    OTHER: "Việc riêng",
+  };
+  return map[leaveType] ?? leaveType;
+}
+
+function toLeaveStatus(status: string): LeaveStatus {
+  const normalized = status.toLowerCase();
+  if (normalized === "approved" || normalized === "rejected" || normalized === "cancelled") {
+    return normalized;
+  }
+  return "pending";
+}
+
+function toLeaveEntry(item: LeaveRequestResponse): LeaveEntry {
+  return {
+    id: item.id,
+    type: toLeaveTypeLabel(item.leaveType),
+    start: item.startDate,
+    end: item.endDate,
+    days: Number(item.daysCount ?? 0),
+    reason: item.reason || "Không có lý do",
+    status: toLeaveStatus(item.status),
+    submitted: item.createdAt ? new Date(item.createdAt).toLocaleDateString("vi-VN") : "-",
+  };
 }
 
 function LeaveHistoryItem({ item }: { item: LeaveEntry }) {
@@ -166,10 +213,20 @@ export default function LeaveRequestPage() {
   const [endDate, setEndDate] = useState<string>("");
   const [reason, setReason] = useState<string>("");
   const [history, setHistory] = useState<LeaveEntry[]>([]);
+  const [historyLoading, setHistoryLoading] = useState<boolean>(true);
   const [toastMsg, setToastMsg] = useState<string>("");
   const [toastVisible, setToastVisible] = useState<boolean>(false);
 
   useEffect(() => {
+    setHistoryLoading(true);
+    apiClient.get('/leave-requests')
+      .then(res => {
+        const items = Array.isArray(res.data) ? res.data : [];
+        setHistory(items.map((item: LeaveRequestResponse) => toLeaveEntry(item)));
+      })
+      .catch(err => console.error('Loi tai lich su nghi phep:', err))
+      .finally(() => setHistoryLoading(false));
+
     apiClient.get('/leave-balance/me')
       .then(res => {
         setBalance(res.data.remainingDays);
@@ -198,8 +255,8 @@ export default function LeaveRequestPage() {
         endDate,
         reason: reason.trim() || "Không có lý do",
       });
-      const entry: LeaveEntry = {
-        id: Date.now(),
+      setHistory((prev) => [{
+        id: `local-${Date.now()}`,
         type: leaveType,
         start: startDate,
         end: endDate,
@@ -207,8 +264,7 @@ export default function LeaveRequestPage() {
         reason: reason.trim() || "Không có lý do",
         status: "pending",
         submitted: new Date().toLocaleDateString("vi-VN"),
-      };
-      setHistory((prev) => [entry, ...prev]);
+      }, ...prev]);
       setBalance((b) => b - days);
       setUsed((u) => u + days);
       setStartDate("");
@@ -222,7 +278,7 @@ export default function LeaveRequestPage() {
   };
 
   return (
-    <div style={{ fontFamily: "'DM Sans', 'Segoe UI', sans-serif", color: "#1a1a18", minHeight: "100vh", background: "#FAFAF8", padding: "28px 24px" }}>
+    <div className="lr-page">
       <Toast message={toastMsg} visible={toastVisible} />
 
       <div style={{ marginBottom: 24 }}>
@@ -230,10 +286,10 @@ export default function LeaveRequestPage() {
         <p style={{ fontSize: 13, color: "#5F5E5A", margin: "4px 0 0" }}>SCRUM-23 - Hệ thống quản lý nghỉ phép nhân viên</p>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1.2fr) minmax(0, 1fr)", gap: 20, maxWidth: 1000 }}>
+      <div className="lr-grid">
         <div>
           <BalanceBar balance={balance} used={used} />
-          <div style={{ background: "#fff", border: "0.5px solid #D3D1C7", borderRadius: 12, padding: "20px 20px 18px" }}>
+          <div className="lr-card">
 
             <div style={{ marginBottom: 16 }}>
               <FieldLabel>Loại nghỉ</FieldLabel>
@@ -286,17 +342,21 @@ export default function LeaveRequestPage() {
         </div>
 
         <div>
-          <div style={{ background: "#fff", border: "0.5px solid #D3D1C7", borderRadius: 12, overflow: "hidden" }}>
-            <div style={{ padding: "14px 18px", borderBottom: "0.5px solid #E8E6E0", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <div className="lr-history-wrap">
+            <div className="lr-history-header">
               <span style={{ fontSize: 14, fontWeight: 500 }}>Lịch sử nghỉ phép</span>
               <span style={{ fontSize: 12, color: "#888780" }}>{history.length} đơn</span>
             </div>
-            {history.length === 0 ? (
-              <div style={{ padding: "40px 18px", textAlign: "center", color: "#B4B2A9" }}>
+            {historyLoading ? (
+              <div className="lr-history-empty">
+                <p style={{ margin: 0, fontSize: 13 }}>Đang tải lịch sử nghỉ phép...</p>
+              </div>
+            ) : history.length === 0 ? (
+              <div className="lr-history-empty">
                 <p style={{ margin: 0, fontSize: 13 }}>Chưa có đơn xin nghỉ nào</p>
               </div>
             ) : (
-              <div style={{ maxHeight: 480, overflowY: "auto" }}>
+              <div className="lr-history">
                 {history.map((item) => <LeaveHistoryItem key={item.id} item={item} />)}
               </div>
             )}
