@@ -62,20 +62,91 @@ function getTypeColor(type: string): { bg: string; color: string } {
   return map[type] || { bg: "#F1EFE8", color: "#5F5E5A" };
 }
 
+// Toast component
+function Toast({ notifications, onDismiss }: {
+  notifications: { id: string; message: string; type: "approved" | "rejected" }[];
+  onDismiss: (id: string) => void;
+}) {
+  return (
+    <div style={{ position: "fixed", top: 20, right: 20, zIndex: 999, display: "flex", flexDirection: "column", gap: 8 }}>
+      {notifications.map(n => (
+        <div key={n.id} style={{
+          background: n.type === "approved" ? "#0F6E56" : "#A32D2D",
+          color: "#fff", padding: "12px 16px", borderRadius: 10,
+          fontSize: 13, display: "flex", alignItems: "center", gap: 12,
+          boxShadow: "0 4px 12px rgba(0,0,0,0.15)", maxWidth: 320,
+          animation: "slideIn 0.3s ease",
+        }}>
+          <span>{n.type === "approved" ? "✅" : "❌"}</span>
+          <span style={{ flex: 1 }}>{n.message}</span>
+          <button onClick={() => onDismiss(n.id)} style={{
+            background: "transparent", border: "none", color: "#fff",
+            cursor: "pointer", fontSize: 16, padding: 0, lineHeight: 1,
+          }}>×</button>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+const STORAGE_KEY = "leave_request_statuses";
+
 export default function LeaveHistory() {
   const navigate = useNavigate();
   const [requests, setRequests] = useState<LeaveRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<string>("ALL");
+  const [notifications, setNotifications] = useState<{ id: string; message: string; type: "approved" | "rejected" }[]>([]);
 
   useEffect(() => {
     apiClient.get('/leave-requests')
       .then(res => {
-        setRequests(Array.isArray(res.data) ? res.data : []);
+        const data: LeaveRequest[] = Array.isArray(res.data) ? res.data : [];
+        setRequests(data);
+        checkForStatusChanges(data);
       })
       .catch(err => console.error(err))
       .finally(() => setLoading(false));
   }, []);
+
+  const checkForStatusChanges = (current: LeaveRequest[]) => {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    const prev: Record<string, LeaveStatus> = raw ? JSON.parse(raw) : {};
+
+    const newNotifs: { id: string; message: string; type: "approved" | "rejected" }[] = [];
+
+    current.forEach(req => {
+      const prevStatus = prev[req.id];
+      if (prevStatus === "PENDING" && req.status === "APPROVED") {
+        newNotifs.push({
+          id: req.id,
+          message: `Đơn ${getLeaveTypeLabel(req.leaveType)} (${formatDate(req.startDate)}) đã được duyệt!`,
+          type: "approved",
+        });
+      } else if (prevStatus === "PENDING" && req.status === "REJECTED") {
+        newNotifs.push({
+          id: req.id,
+          message: `Đơn ${getLeaveTypeLabel(req.leaveType)} (${formatDate(req.startDate)}) đã bị từ chối.`,
+          type: "rejected",
+        });
+      }
+    });
+
+    // Lưu trạng thái mới nhất vào localStorage
+    const updated: Record<string, LeaveStatus> = {};
+    current.forEach(req => { updated[req.id] = req.status; });
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+
+    if (newNotifs.length > 0) {
+      setNotifications(newNotifs);
+      // Tự dismiss sau 5 giây
+      setTimeout(() => setNotifications([]), 5000);
+    }
+  };
+
+  const dismissNotification = (id: string) => {
+    setNotifications(prev => prev.filter(n => n.id !== id));
+  };
 
   const filters = [
     { value: "ALL", label: "Tất cả" },
@@ -89,6 +160,8 @@ export default function LeaveHistory() {
 
   return (
     <div style={{ fontFamily: "'DM Sans', 'Segoe UI', sans-serif", color: "#1a1a18", minHeight: "100vh", background: "#FAFAF8", padding: "28px 24px" }}>
+
+      <Toast notifications={notifications} onDismiss={dismissNotification} />
 
       {/* Header */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24 }}>
@@ -156,7 +229,6 @@ export default function LeaveHistory() {
                 background: "#fff", border: "0.5px solid #D3D1C7", borderRadius: 12,
                 padding: "16px 20px", display: "flex", alignItems: "center", gap: 16,
               }}>
-                {/* Type icon */}
                 <div style={{
                   width: 40, height: 40, borderRadius: 10,
                   background: typeColor.bg, color: typeColor.color,
@@ -166,7 +238,6 @@ export default function LeaveHistory() {
                   {req.leaveType === "ANNUAL" ? "☀️" : req.leaveType === "SICK" ? "🏥" : req.leaveType === "UNPAID" ? "📅" : "📝"}
                 </div>
 
-                {/* Info */}
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
                     <span style={{ fontSize: 14, fontWeight: 500 }}>{getLeaveTypeLabel(req.leaveType)}</span>
@@ -187,7 +258,6 @@ export default function LeaveHistory() {
                   )}
                 </div>
 
-                {/* Date submitted */}
                 <div style={{ textAlign: "right", flexShrink: 0 }}>
                   <div style={{ fontSize: 11, color: "#888780" }}>Gửi lúc</div>
                   <div style={{ fontSize: 12, color: "#5F5E5A", fontWeight: 500 }}>{formatDate(req.createdAt)}</div>

@@ -8,13 +8,40 @@ const todayStr: string = (() => {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 })();
 
+// Danh sách ngày lễ Việt Nam cố định (MM-DD)
+const FIXED_HOLIDAYS: string[] = [
+  "01-01", // Tết Dương lịch
+  "04-30", // Giải phóng miền Nam
+  "05-01", // Quốc tế Lao động
+  "09-02", // Quốc khánh
+];
+
+// Ngày lễ Âm lịch 2026 (cần cập nhật hàng năm)
+const LUNAR_HOLIDAYS_2026: string[] = [
+  "2026-02-17", // 29 Tết
+  "2026-02-18", // Mùng 1 Tết
+  "2026-02-19", // Mùng 2 Tết
+  "2026-02-20", // Mùng 3 Tết
+  "2026-02-21", // Mùng 4 Tết
+  "2026-02-22", // Mùng 5 Tết
+  "2026-04-02", // Giỗ Tổ Hùng Vương (10/3 âm)
+];
+
+function isHoliday(dateStr: string): boolean {
+  const mmdd = dateStr.slice(5); // "MM-DD"
+  if (FIXED_HOLIDAYS.includes(mmdd)) return true;
+  if (LUNAR_HOLIDAYS_2026.includes(dateStr)) return true;
+  return false;
+}
+
 function countWorkdays(start: string, end: string): number {
   let count = 0;
   const cur = new Date(start);
   const e = new Date(end);
   while (cur <= e) {
     const day = cur.getDay();
-    if (day !== 0 && day !== 6) count++;
+    const dateStr = `${cur.getFullYear()}-${pad(cur.getMonth() + 1)}-${pad(cur.getDate())}`;
+    if (day !== 0 && day !== 6 && !isHoliday(dateStr)) count++;
     cur.setDate(cur.getDate() + 1);
   }
   return count;
@@ -34,22 +61,6 @@ const LEAVE_TYPE_MAP: Record<string, string> = {
   "Việc riêng": "OTHER",
 };
 
-const INITIAL_BALANCE = 12;
-const INITIAL_USED = 3;
-
-type LeaveStatus = "pending" | "approved" | "rejected";
-
-interface LeaveEntry {
-  id: number;
-  type: string;
-  start: string;
-  end: string;
-  days: number;
-  reason: string;
-  status: LeaveStatus;
-  submitted: string;
-}
-
 function Toast({ message, visible }: { message: string; visible: boolean }) {
   return (
     <div style={{
@@ -66,7 +77,7 @@ function Toast({ message, visible }: { message: string; visible: boolean }) {
 
 function BalanceBar({ balance, used }: { balance: number; used: number }) {
   const total = balance + used;
-  const pct = Math.round((used / total) * 100);
+  const pct = total > 0 ? Math.round((used / total) * 100) : 0;
   return (
     <div style={{ background: "#F0FBF7", border: "0.5px solid #9FE1CB", borderRadius: 12, padding: "14px 18px", marginBottom: 16, display: "flex", alignItems: "center", gap: 14 }}>
       <div style={{ flex: 1, minWidth: 0 }}>
@@ -121,9 +132,9 @@ function CalcBox({ days, balance }: { days: number | null; balance: number }) {
   return (
     <div style={{ background: bg, borderRadius: 8, padding: "10px 14px", display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
       <div>
-        <div style={{ fontSize: 13, color: "#5F5E5A" }}>Tổng ngày nghỉ (trừ T7, CN)</div>
+        <div style={{ fontSize: 13, color: "#5F5E5A" }}>Tổng ngày nghỉ (trừ T7, CN, ngày lễ)</div>
         <div style={{ fontSize: 11, color: "#888780", marginTop: 1 }}>
-          {days === null ? "Chọn ngày để tính" : days > balance ? "Vượt quá số dư ngày phép" : "Ngày làm việc thực tế"}
+          {days === null ? "Chọn ngày để tính" : days === 0 ? "Toàn ngày lễ / cuối tuần" : days > balance ? "Vượt quá số dư ngày phép" : "Ngày làm việc thực tế"}
         </div>
       </div>
       <div style={{ fontSize: 20, fontWeight: 600, color, minWidth: 40, textAlign: "right" }}>
@@ -134,41 +145,19 @@ function CalcBox({ days, balance }: { days: number | null; balance: number }) {
   );
 }
 
-function StatusBadge({ status }: { status: LeaveStatus }) {
-  const map: Record<LeaveStatus, { bg: string; color: string; label: string }> = {
-    pending:  { bg: "#FAEEDA", color: "#854F0B", label: "PENDING" },
-    approved: { bg: "#EAF3DE", color: "#3B6D11", label: "APPROVED" },
-    rejected: { bg: "#FCEBEB", color: "#A32D2D", label: "REJECTED" },
-  };
-  const s = map[status] ?? map.pending;
-  return <span style={{ fontSize: 10, padding: "2px 8px", borderRadius: 99, background: s.bg, color: s.color, fontWeight: 600 }}>{s.label}</span>;
-}
-
-function LeaveHistoryItem({ item }: { item: LeaveEntry }) {
-  return (
-    <div style={{ padding: "12px 18px", borderBottom: "0.5px solid #E8E6E0" }}>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
-        <span style={{ fontSize: 13, fontWeight: 500 }}>{item.type}</span>
-        <StatusBadge status={item.status} />
-      </div>
-      <div style={{ fontSize: 12, color: "#5F5E5A" }}>{formatDate(item.start)} - {formatDate(item.end)}</div>
-      <div style={{ fontSize: 12, color: "#888780", marginTop: 2 }}>{item.days} ngày - Gửi {item.submitted}</div>
-      {item.reason && <div style={{ fontSize: 12, color: "#5F5E5A", marginTop: 3 }}>{item.reason}</div>}
-    </div>
-  );
-}
-
 export default function LeaveRequestPage() {
-  const [balance, setBalance] = useState<number>(INITIAL_BALANCE);
-  const [used, setUsed] = useState<number>(INITIAL_USED);
+  const [balance, setBalance] = useState<number>(12);
+  const [used, setUsed] = useState<number>(0);
   const [leaveType, setLeaveType] = useState<string>(LEAVE_TYPES[0]);
   const [startDate, setStartDate] = useState<string>("");
   const [endDate, setEndDate] = useState<string>("");
   const [reason, setReason] = useState<string>("");
-  const [history, setHistory] = useState<LeaveEntry[]>([]);
+  const [existingRequests, setExistingRequests] = useState<any[]>([]);
   const [toastMsg, setToastMsg] = useState<string>("");
   const [toastVisible, setToastVisible] = useState<boolean>(false);
+  const [toastError, setToastError] = useState<boolean>(false);
 
+  // Fetch số dư ngày phép
   useEffect(() => {
     apiClient.get('/leave-balance/me')
       .then(res => {
@@ -178,13 +167,33 @@ export default function LeaveRequestPage() {
       .catch(err => console.error('Loi tai so du ngay phep:', err));
   }, []);
 
+  // Fetch lịch sử đơn để check trùng ngày
+  useEffect(() => {
+    apiClient.get('/leave-requests')
+      .then(res => setExistingRequests(res.data))
+      .catch(err => console.error('Loi tai lich su don:', err));
+  }, []);
+
   const dateError: boolean = Boolean(startDate && endDate && endDate < startDate);
   const days: number | null = startDate && endDate && !dateError ? countWorkdays(startDate, endDate) : null;
   const balanceError: boolean = days !== null && days > balance;
-  const canSubmit: boolean = days !== null && !dateError && !balanceError;
+  const zeroError: boolean = days === 0;
 
-  const showToast = useCallback((msg: string): void => {
+  // Check trùng ngày với đơn PENDING hoặc APPROVED
+  const overlapError: boolean = (() => {
+    if (!startDate || !endDate) return false;
+    return existingRequests.some(r => {
+      if (r.status !== 'PENDING' && r.status !== 'APPROVED') return false;
+      // Kiểm tra overlap: A.start <= B.end && A.end >= B.start
+      return startDate <= r.endDate && endDate >= r.startDate;
+    });
+  })();
+
+  const canSubmit: boolean = days !== null && days > 0 && !dateError && !balanceError && !overlapError;
+
+  const showToast = useCallback((msg: string, isError = false): void => {
     setToastMsg(msg);
+    setToastError(isError);
     setToastVisible(true);
     setTimeout(() => setToastVisible(false), 3000);
   }, []);
@@ -198,25 +207,20 @@ export default function LeaveRequestPage() {
         endDate,
         reason: reason.trim() || "Không có lý do",
       });
-      const entry: LeaveEntry = {
-        id: Date.now(),
-        type: leaveType,
-        start: startDate,
-        end: endDate,
-        days,
-        reason: reason.trim() || "Không có lý do",
-        status: "pending",
-        submitted: new Date().toLocaleDateString("vi-VN"),
-      };
-      setHistory((prev) => [entry, ...prev]);
-      setBalance((b) => b - days);
-      setUsed((u) => u + days);
+      // Refresh lại đơn và balance
+      const [balanceRes, requestsRes] = await Promise.all([
+        apiClient.get('/leave-balance/me'),
+        apiClient.get('/leave-requests'),
+      ]);
+      setBalance(balanceRes.data.remainingDays);
+      setUsed(balanceRes.data.usedDays);
+      setExistingRequests(requestsRes.data);
       setStartDate("");
       setEndDate("");
       setReason("");
       showToast("Đơn xin nghỉ đã được gửi thành công!");
     } catch (err) {
-      showToast("Lỗi khi gửi đơn. Vui lòng thử lại.");
+      showToast("Lỗi khi gửi đơn. Vui lòng thử lại.", true);
       console.error(err);
     }
   };
@@ -230,77 +234,60 @@ export default function LeaveRequestPage() {
         <p style={{ fontSize: 13, color: "#5F5E5A", margin: "4px 0 0" }}>SCRUM-23 - Hệ thống quản lý nghỉ phép nhân viên</p>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1.2fr) minmax(0, 1fr)", gap: 20, maxWidth: 1000 }}>
-        <div>
-          <BalanceBar balance={balance} used={used} />
-          <div style={{ background: "#fff", border: "0.5px solid #D3D1C7", borderRadius: 12, padding: "20px 20px 18px" }}>
+      {/* Chỉ còn 1 cột — bỏ panel lịch sử bên phải theo yêu cầu PO */}
+      <div style={{ maxWidth: 560 }}>
+        <BalanceBar balance={balance} used={used} />
+        <div style={{ background: "#fff", border: "0.5px solid #D3D1C7", borderRadius: 12, padding: "20px 20px 18px" }}>
 
-            <div style={{ marginBottom: 16 }}>
-              <FieldLabel>Loại nghỉ</FieldLabel>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-                {LEAVE_TYPES.map((t) => (
-                  <TypeChip key={t} label={t} active={leaveType === t} onClick={() => setLeaveType(t)} />
-                ))}
-              </div>
+          <div style={{ marginBottom: 16 }}>
+            <FieldLabel>Loại nghỉ</FieldLabel>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+              {LEAVE_TYPES.map((t) => (
+                <TypeChip key={t} label={t} active={leaveType === t} onClick={() => setLeaveType(t)} />
+              ))}
             </div>
-
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 4 }}>
-              <div>
-                <FieldLabel>Ngày bắt đầu</FieldLabel>
-                <input type="date" value={startDate} min={todayStr} onChange={(e) => setStartDate(e.target.value)} style={inputStyle} />
-              </div>
-              <div>
-                <FieldLabel>Ngày kết thúc</FieldLabel>
-                <input type="date" value={endDate} min={startDate || todayStr} onChange={(e) => setEndDate(e.target.value)} style={inputStyle} />
-              </div>
-            </div>
-
-            {dateError && <p style={{ fontSize: 12, color: "#A32D2D", margin: "0 0 10px" }}>Ngày kết thúc không được trước ngày bắt đầu</p>}
-
-            <div style={{ marginBottom: 4 }}>
-              <CalcBox days={days} balance={balance} />
-            </div>
-
-            {balanceError && <p style={{ fontSize: 12, color: "#A32D2D", margin: "0 0 10px" }}>Số ngày xin nghỉ vượt quá số dư ({balance} ngày)</p>}
-
-            <div style={{ marginBottom: 16 }}>
-              <FieldLabel>Lý do nghỉ</FieldLabel>
-              <textarea value={reason} onChange={(e) => setReason(e.target.value)}
-                placeholder="Nhập lý do xin nghỉ phép..." rows={3}
-                style={{ ...inputStyle, resize: "vertical" }} />
-            </div>
-
-            <button onClick={handleSubmit} disabled={!canSubmit} style={{
-              width: "100%", padding: "10px 0", borderRadius: 8, border: "none",
-              background: canSubmit ? "#0F6E56" : "#D3D1C7",
-              color: canSubmit ? "#fff" : "#888780",
-              fontSize: 14, fontWeight: 500, cursor: canSubmit ? "pointer" : "not-allowed",
-              display: "flex", alignItems: "center", justifyContent: "center", gap: 6, fontFamily: "inherit",
-            }}
-              onMouseEnter={(e: MouseEvent<HTMLButtonElement>) => { if (canSubmit) e.currentTarget.style.background = "#085041"; }}
-              onMouseLeave={(e: MouseEvent<HTMLButtonElement>) => { if (canSubmit) e.currentTarget.style.background = "#0F6E56"; }}
-            >
-              Gửi đơn xin nghỉ
-            </button>
           </div>
-        </div>
 
-        <div>
-          <div style={{ background: "#fff", border: "0.5px solid #D3D1C7", borderRadius: 12, overflow: "hidden" }}>
-            <div style={{ padding: "14px 18px", borderBottom: "0.5px solid #E8E6E0", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-              <span style={{ fontSize: 14, fontWeight: 500 }}>Lịch sử nghỉ phép</span>
-              <span style={{ fontSize: 12, color: "#888780" }}>{history.length} đơn</span>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 4 }}>
+            <div>
+              <FieldLabel>Ngày bắt đầu</FieldLabel>
+              <input type="date" value={startDate} min={todayStr} onChange={(e) => setStartDate(e.target.value)} style={inputStyle} />
             </div>
-            {history.length === 0 ? (
-              <div style={{ padding: "40px 18px", textAlign: "center", color: "#B4B2A9" }}>
-                <p style={{ margin: 0, fontSize: 13 }}>Chưa có đơn xin nghỉ nào</p>
-              </div>
-            ) : (
-              <div style={{ maxHeight: 480, overflowY: "auto" }}>
-                {history.map((item) => <LeaveHistoryItem key={item.id} item={item} />)}
-              </div>
-            )}
+            <div>
+              <FieldLabel>Ngày kết thúc</FieldLabel>
+              <input type="date" value={endDate} min={startDate || todayStr} onChange={(e) => setEndDate(e.target.value)} style={inputStyle} />
+            </div>
           </div>
+
+          {dateError && <p style={{ fontSize: 12, color: "#A32D2D", margin: "0 0 10px" }}>Ngày kết thúc không được trước ngày bắt đầu</p>}
+
+          <div style={{ marginBottom: 4 }}>
+            <CalcBox days={days} balance={balance} />
+          </div>
+
+          {zeroError && <p style={{ fontSize: 12, color: "#A32D2D", margin: "0 0 10px" }}>Khoảng thời gian này toàn ngày lễ hoặc cuối tuần, không tính ngày phép</p>}
+          {balanceError && <p style={{ fontSize: 12, color: "#A32D2D", margin: "0 0 10px" }}>Số ngày xin nghỉ vượt quá số dư ({balance} ngày)</p>}
+          {overlapError && <p style={{ fontSize: 12, color: "#A32D2D", margin: "0 0 10px" }}>Bạn đã có đơn nghỉ phép trong khoảng thời gian này</p>}
+
+          <div style={{ marginBottom: 16 }}>
+            <FieldLabel>Lý do nghỉ</FieldLabel>
+            <textarea value={reason} onChange={(e) => setReason(e.target.value)}
+              placeholder="Nhập lý do xin nghỉ phép..." rows={3}
+              style={{ ...inputStyle, resize: "vertical" }} />
+          </div>
+
+          <button onClick={handleSubmit} disabled={!canSubmit} style={{
+            width: "100%", padding: "10px 0", borderRadius: 8, border: "none",
+            background: canSubmit ? "#0F6E56" : "#D3D1C7",
+            color: canSubmit ? "#fff" : "#888780",
+            fontSize: 14, fontWeight: 500, cursor: canSubmit ? "pointer" : "not-allowed",
+            display: "flex", alignItems: "center", justifyContent: "center", gap: 6, fontFamily: "inherit",
+          }}
+            onMouseEnter={(e: MouseEvent<HTMLButtonElement>) => { if (canSubmit) e.currentTarget.style.background = "#085041"; }}
+            onMouseLeave={(e: MouseEvent<HTMLButtonElement>) => { if (canSubmit) e.currentTarget.style.background = "#0F6E56"; }}
+          >
+            Gửi đơn xin nghỉ
+          </button>
         </div>
       </div>
     </div>

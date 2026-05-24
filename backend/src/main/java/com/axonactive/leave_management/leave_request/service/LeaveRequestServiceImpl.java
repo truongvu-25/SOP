@@ -204,6 +204,7 @@ public class LeaveRequestServiceImpl implements LeaveRequestService {
                 .reviewedById(request.getReviewedBy() != null ? request.getReviewedBy().getId() : null)
                 .reviewNote(request.getReviewNote())
                 .createdAt(request.getCreatedAt())
+                .updatedAt(request.getUpdatedAt())
                 .build();
     }
 }

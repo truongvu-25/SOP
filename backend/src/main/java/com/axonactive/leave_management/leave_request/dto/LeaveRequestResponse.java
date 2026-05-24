@@ -4,7 +4,6 @@ import com.axonactive.leave_management.leave_request.entity.LeaveStatus;
 import com.axonactive.leave_management.leave_request.entity.LeaveType;
 import lombok.Builder;
 import lombok.Data;
-
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -24,4 +23,5 @@ public class LeaveRequestResponse {
     private UUID reviewedById;
     private String reviewNote;
     private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 }

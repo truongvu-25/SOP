@@ -18,10 +18,8 @@ const ManagerDashboard = () => {
 
   return (
     <div style={styles.wrapper}>
-      {/* Background decoration */}
       <div style={styles.bgDecoration} />
 
-      {/* Header */}
       <header style={styles.header}>
         <div style={styles.headerLeft}>
           <div style={styles.logo}>
@@ -43,12 +41,9 @@ const ManagerDashboard = () => {
         </div>
       </header>
 
-      {/* Main content */}
       <main style={styles.main}>
-        {/* Stats bar */}
-        <StatsBar refreshKey={refreshKey} />
+        <StatsBar key={refreshKey} refreshKey={refreshKey} />
 
-        {/* Tab Navigation */}
         <div style={styles.tabContainer}>
           <button
             style={activeTab === 'pending' ? { ...styles.tab, ...styles.tabActive } : styles.tab}
@@ -66,7 +61,6 @@ const ManagerDashboard = () => {
           </button>
         </div>
 
-        {/* Tab Content */}
         <div style={styles.tabContent}>
           {activeTab === 'pending' && (
             <PendingRequests onActionSuccess={handleActionSuccess} key={refreshKey} />
@@ -88,14 +82,37 @@ const StatsBar = ({ refreshKey }) => {
     const token = localStorage.getItem('token');
     if (!token) return;
 
-    fetch('/api/leave-requests/pending', {
+    const today = new Date().toLocaleDateString('en-CA');
+
+    const fetchPending = fetch('/api/leave-requests/pending', {
       headers: { Authorization: `Bearer ${token}` }
-    })
-      .then(res => res.ok ? res.json() : [])
-      .then(data => {
-        if (Array.isArray(data)) {
-          setStats(prev => ({ ...prev, pending: data.length }));
-        }
+    }).then(res => res.ok ? res.json() : []);
+
+    const fetchTeam = fetch('/api/leave-requests/team', {
+      headers: { Authorization: `Bearer ${token}` }
+    }).then(res => res.ok ? res.json() : []);
+
+    Promise.all([fetchPending, fetchTeam])
+      .then(([pending, team]) => {
+        const pendingCount = Array.isArray(pending) ? pending.length : 0;
+
+        const approvedToday = Array.isArray(team)
+          ? team.filter(r => {
+              if (r.status !== 'APPROVED' || !r.updatedAt) return false;
+              const localDate = new Date(r.updatedAt + 'Z').toLocaleDateString('en-CA');
+              return localDate === today;
+            }).length
+          : 0;
+
+        const rejectedToday = Array.isArray(team)
+          ? team.filter(r => {
+              if (r.status !== 'REJECTED' || !r.updatedAt) return false;
+              const localDate = new Date(r.updatedAt + 'Z').toLocaleDateString('en-CA');
+              return localDate === today;
+            }).length
+          : 0;
+
+        setStats({ pending: pendingCount, approved: approvedToday, rejected: rejectedToday });
       })
       .catch(() => {});
   }, [refreshKey]);
@@ -152,13 +169,8 @@ const styles = {
     position: 'relative',
     zIndex: 10,
   },
-  headerLeft: {
-    flex: 1,
-  },
-  headerCenter: {
-    flex: 2,
-    textAlign: 'center',
-  },
+  headerLeft: { flex: 1 },
+  headerCenter: { flex: 2, textAlign: 'center' },
   headerRight: {
     flex: 1,
     display: 'flex',
@@ -166,11 +178,7 @@ const styles = {
     justifyContent: 'flex-end',
     gap: '12px',
   },
-  logo: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '8px',
-  },
+  logo: { display: 'flex', alignItems: 'center', gap: '8px' },
   logoIcon: {
     width: '32px',
     height: '32px',
@@ -198,11 +206,7 @@ const styles = {
     color: 'white',
     letterSpacing: '0.5px',
   },
-  userBadge: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '8px',
-  },
+  userBadge: { display: 'flex', alignItems: 'center', gap: '8px' },
   avatar: {
     width: '32px',
     height: '32px',
@@ -217,11 +221,7 @@ const styles = {
     lineHeight: '32px',
     textAlign: 'center',
   },
-  userName: {
-    color: '#cbd5e1',
-    fontSize: '14px',
-    fontWeight: '500',
-  },
+  userName: { color: '#cbd5e1', fontSize: '14px', fontWeight: '500' },
   logoutBtn: {
     padding: '6px 14px',
     borderRadius: '6px',
@@ -254,19 +254,9 @@ const styles = {
     gap: '16px',
     boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
   },
-  statIcon: {
-    fontSize: '28px',
-  },
-  statValue: {
-    fontSize: '28px',
-    fontWeight: '700',
-    lineHeight: 1,
-  },
-  statLabel: {
-    fontSize: '13px',
-    color: '#64748b',
-    marginTop: '4px',
-  },
+  statIcon: { fontSize: '28px' },
+  statValue: { fontSize: '28px', fontWeight: '700', lineHeight: 1 },
+  statLabel: { fontSize: '13px', color: '#64748b', marginTop: '4px' },
   tabContainer: {
     display: 'flex',
     gap: '8px',
@@ -295,9 +285,7 @@ const styles = {
     borderBottom: '2px solid #3b82f6',
     backgroundColor: '#eff6ff',
   },
-  tabIcon: {
-    fontSize: '16px',
-  },
+  tabIcon: { fontSize: '16px' },
   tabContent: {
     backgroundColor: 'white',
     borderRadius: '12px',
